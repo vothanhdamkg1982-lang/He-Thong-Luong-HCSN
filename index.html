@@ -671,7 +671,7 @@
     <!-- Footer -->
     <footer class="bg-white border-t border-slate-200 py-6 mt-12 no-print shrink-0">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-2">
-            <p class="text-xs text-slate-500">© 2026 Hệ thống quản lý lương cán bộ công chức viên chức - Dịch vụ Y tế / Giáo dục hành chính sự nghiệp.</p>
+            <p class="text-xs text-slate-500">© Copyright Võ Thanh Đậm 2026. Hệ thống quản lý lương cán bộ công chức viên chức - Dịch vụ Y tế / Giáo dục hành chính sự nghiệp.</p>
             <p class="text-[10px] text-slate-400">Ứng dụng tuân thủ nghiêm ngặt theo các chính sách đóng BHXH 8%, BHYT 1.5%, BHTN 1% từ phần nền đóng chính của Nhà nước.</p>
         </div>
     </footer>
@@ -702,7 +702,7 @@
                 heSoLuong: 4.32,
                 pcChucVu: 0,
                 pcKhuVuc: 0.5,
-                uuDaiPercent: 50,
+                uuDaiPercent: 60,
                 pcTrachNhiem: 0,
                 pctnPercent: 23,
                 pcYTe: 0.9936, // Based on calculated or recorded yte
@@ -710,7 +710,7 @@
             }
         ];
 
-        let baseSalary = 2340000; // Default base salary VND
+        let baseSalary = 2530000; // Default base salary VND
         let currentTab = 'table';
         let filterMonth = 'All';
         let searchTerm = '';
@@ -734,9 +734,9 @@
             });
 
             document.getElementById('reset-base-salary').addEventListener('click', () => {
-                baseSalary = 2340000;
+                baseSalary = 2530000;
                 bInput.value = baseSalary;
-                showToast('Đã đặt lại mức lương cơ sở về 2,340,000đ!');
+                showToast('Đã đặt lại mức lương cơ sở về 2,530,000đ!');
                 renderAll();
             });
 
