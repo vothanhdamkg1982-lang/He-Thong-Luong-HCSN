@@ -1,62 +1,40 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Quản Lý & Tính Lương HCSN</title>
-    <!-- Tailwind CSS CDN -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bảng Lương HCSN – Tháng 7/2026</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
+        body { font-family: 'Inter', sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        @media print { .no-print { display: none !important; } body { background: white; } .print-card { border: none !important; box-shadow: none !important; padding: 0 !important; } }
+        .salary-table thead { position: sticky; top: 0; z-index: 20; }
+        .salary-table tbody tr:hover { background: #f8fafc; }
+        .payslip-edit input, .payslip-edit select {
+            width: 100%; padding: 4px 8px; border-radius: 8px; border: 1px solid #e2e8f0;
+            font-size: 12px; font-family: 'JetBrains Mono', monospace; background: #f8fafc; transition: all 0.2s;
         }
-        .font-mono {
-            font-family: 'JetBrains Mono', monospace;
+        .payslip-edit input:focus, .payslip-edit select:focus {
+            outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.2); background: white;
         }
-        /* Custom scrollbar for web app feel */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-        @media print {
-            .no-print {
-                display: none !important;
-            }
-            body {
-                background: white;
-            }
-            .print-card {
-                border: none !important;
-                box-shadow: none !important;
-                padding: 0 !important;
-            }
-        }
+        .payslip-edit input[type="number"] { -moz-appearance: textfield; }
+        .payslip-edit input::-webkit-outer-spin-button, .payslip-edit input::-webkit-inner-spin-button { -webkit-appearance: none; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <!-- Toast Notification System -->
+    <!-- Toast & Confirm Modal -->
     <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
-
-    <!-- Confirmation Modal (Custom dialog instead of window.confirm) -->
     <div id="confirm-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden p-6 space-y-4">
             <div class="flex items-center gap-3 text-amber-600">
-                <svg class="w-6 h-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                </svg>
+                <svg class="w-6 h-6 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                 <h3 class="text-base font-bold text-slate-950" id="confirm-title">Xác nhận thao tác</h3>
             </div>
             <p class="text-sm text-slate-600 leading-relaxed" id="confirm-message">Bạn có chắc chắn muốn thực hiện hành động này không?</p>
@@ -67,172 +45,101 @@
         </div>
     </div>
 
-    <!-- Header Top Bar -->
+    <!-- Header -->
     <header class="bg-gradient-to-r from-slate-950 via-slate-900 to-indigo-950 text-white sticky top-0 z-30 shadow-md no-print">
         <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <!-- Brand -->
             <div class="flex items-center gap-3">
                 <div class="bg-indigo-600 p-2.5 rounded-xl shadow-lg shadow-indigo-500/30">
-                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </div>
                 <div>
                     <h1 class="text-lg font-extrabold tracking-tight">HỆ THỐNG QUẢN LÝ LƯƠNG HCSN</h1>
-                    <p class="text-[11px] text-slate-300">Tính toán & mô phỏng tiền lương cơ sở theo chuẩn bảng Excel</p>
+                    <p class="text-[11px] text-slate-300">Bảng lương tháng 7/2026 – Lương cơ sở 2.530.000₫ – Hệ số ưu đãi 60%</p>
                 </div>
             </div>
-
-            <!-- Quick Settings (Lương cơ sở) -->
             <div class="flex flex-wrap items-center gap-3 bg-slate-800/80 p-2 rounded-xl border border-slate-700/60 w-full md:w-auto justify-between md:justify-start">
                 <div class="flex items-center gap-2 text-slate-300 px-2 py-1 text-xs font-semibold">
-                    <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
+                    <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     <span>Lương cơ sở:</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="relative">
-                        <input 
-                            type="number" 
-                            id="base-salary-input" 
-                            value="2340000" 
-                            class="bg-slate-950 text-emerald-400 font-mono font-bold text-sm px-3 py-1.5 rounded-lg border border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-32 pr-8"
-                        />
+                        <input type="number" id="base-salary-input" value="2530000" class="bg-slate-950 text-emerald-400 font-mono font-bold text-sm px-3 py-1.5 rounded-lg border border-slate-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 w-32 pr-8" />
                         <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-500 font-mono">đ</span>
                     </div>
-                    <button 
-                        id="reset-base-salary"
-                        title="Khôi phục mặc định" 
-                        class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700/50 transition-colors"
-                    >
-                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H19" />
-                        </svg>
+                    <button id="reset-base-salary" title="Khôi phục mặc định" class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-700/50 transition-colors">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H19" /></svg>
                     </button>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Main Container -->
+    <!-- Main -->
     <main class="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex-1 w-full">
-        
-        <!-- Navigation Tabs & Actions Bar -->
+
+        <!-- Tabs & Actions -->
         <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 mb-6 flex flex-col md:flex-row items-center justify-between gap-4 no-print">
-            
-            <!-- Navigation Tabs -->
             <div class="flex bg-slate-100 p-1 rounded-xl w-full md:w-auto">
-                <button
-                    onclick="switchTab('table')"
-                    id="tab-btn-table"
-                    class="tab-btn flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all bg-white text-indigo-600 shadow-sm flex-1 md:flex-none"
-                >
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H3a2 2 0 01-2-2V5a2 2 0 012-2h18a2 2 0 012 2v12a2 2 0 01-2 2z" />
-                    </svg>
+                <button onclick="switchTab('table')" id="tab-btn-table" class="tab-btn flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all bg-white text-indigo-600 shadow-sm flex-1 md:flex-none">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H3a2 2 0 01-2-2V5a2 2 0 012-2h18a2 2 0 012 2v12a2 2 0 01-2 2z" /></svg>
                     Bảng Tính Lương
                 </button>
-                <button
-                    onclick="switchTab('dashboard')"
-                    id="tab-btn-dashboard"
-                    class="tab-btn flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900 flex-1 md:flex-none"
-                >
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.003 9.003 0 1020.945 13H11V3.055z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
-                    </svg>
+                <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="tab-btn flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900 flex-1 md:flex-none">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.003 9.003 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
                     Thống Kê Cơ Cấu
                 </button>
-                <button
-                    onclick="switchTab('payslip')"
-                    id="tab-btn-payslip"
-                    class="tab-btn flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900 flex-1 md:flex-none"
-                >
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                    </svg>
+                <button onclick="switchTab('payslip')" id="tab-btn-payslip" class="tab-btn flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900 flex-1 md:flex-none">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
                     Phiếu Lương Cá Nhân
                 </button>
             </div>
-
-            <!-- Quick Actions Buttons -->
             <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-end">
-                <button
-                    onclick="openAddModal()"
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md shadow-indigo-500/10 flex items-center gap-2 hover:-translate-y-0.5 transition-all w-full sm:w-auto justify-center"
-                >
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-                    </svg>
+                <button onclick="openAddModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md shadow-indigo-500/10 flex items-center gap-2 hover:-translate-y-0.5 transition-all w-full sm:w-auto justify-center">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                     <span>Thêm Nhân Viên</span>
                 </button>
-                <button
-                    onclick="openImportModal()"
-                    class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-bold text-xs px-3.5 py-2.5 rounded-xl flex items-center gap-2 transition-all w-full sm:w-auto justify-center"
-                >
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                    </svg>
-                    <span>Nhập CSV</span>
+                <button onclick="exportJSON()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-md shadow-blue-500/10 flex items-center gap-2 hover:-translate-y-0.5 transition-all w-full sm:w-auto justify-center">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                    <span>Xuất JSON</span>
                 </button>
-                <button
-                    onclick="exportCSV()"
-                    class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-md shadow-emerald-500/10 flex items-center gap-2 hover:-translate-y-0.5 transition-all w-full sm:w-auto justify-center"
-                >
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
+                <button onclick="document.getElementById('import-json-input').click()" class="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-md shadow-amber-500/10 flex items-center gap-2 hover:-translate-y-0.5 transition-all w-full sm:w-auto justify-center">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
+                    <span>Nhập JSON</span>
+                </button>
+                <input type="file" id="import-json-input" accept=".json" class="hidden" onchange="importJSON(event)" />
+                <button onclick="exportCSV()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-md shadow-emerald-500/10 flex items-center gap-2 hover:-translate-y-0.5 transition-all w-full sm:w-auto justify-center">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4-4m4 4V4" /></svg>
                     <span>Xuất CSV</span>
+                </button>
+                <button onclick="resetData()" class="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs px-3.5 py-2.5 rounded-xl shadow-md shadow-rose-500/10 flex items-center gap-2 hover:-translate-y-0.5 transition-all w-full sm:w-auto justify-center">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 15H19" /></svg>
+                    <span>Xóa dữ liệu đã lưu</span>
                 </button>
             </div>
         </div>
 
-        <!-- Tab 1: BẢNG LƯƠNG CHI TIẾT -->
+        <!-- Tab 1: Bảng lương -->
         <section id="view-table" class="tab-view space-y-4">
-            
-            <!-- Filters Header Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-white p-4 rounded-xl shadow-sm border border-slate-200/60 no-print">
-                <!-- Search bar -->
                 <div class="relative">
-                    <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <input
-                        type="text"
-                        id="search-input"
-                        placeholder="Tìm theo tên, mã ngạch..."
-                        oninput="triggerFilter()"
-                        class="pl-10 pr-4 py-2 w-full text-xs rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                    />
+                    <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <input type="text" id="search-input" placeholder="Tìm theo tên, mã ngạch..." oninput="triggerFilter()" class="pl-10 pr-4 py-2 w-full text-xs rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all" />
                 </div>
-
-                <!-- Month filter -->
                 <div class="flex items-center gap-2.5">
-                    <svg class="w-4 h-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <select
-                        id="filter-month"
-                        onchange="triggerFilter()"
-                        class="py-2 px-3 w-full text-xs rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-                    >
+                    <svg class="w-4 h-4 text-slate-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                    <select id="filter-month" onchange="triggerFilter()" class="py-2 px-3 w-full text-xs rounded-xl border border-slate-300 bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all">
                         <option value="All">Tất cả các tháng</option>
                     </select>
                 </div>
-
-                <!-- Live summary counter -->
                 <div class="flex items-center justify-end text-xs text-slate-500 px-2 font-semibold">
                     Đang hiển thị &nbsp;<span id="count-badge" class="text-indigo-600 font-extrabold">0</span>&nbsp; dòng thanh toán
                 </div>
             </div>
 
-            <!-- Table Card Container -->
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/85 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse table-auto min-w-max">
-                        <!-- Headings -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200/85 overflow-hidden relative">
+                <div class="overflow-x-auto max-h-[75vh] overflow-y-auto">
+                    <table class="w-full text-left border-collapse table-auto min-w-max salary-table">
                         <thead>
                             <tr class="bg-slate-900 text-white text-[10px] uppercase tracking-wider font-bold">
                                 <th rowspan="2" class="p-3 border-r border-slate-700 text-center sticky left-0 bg-slate-900 z-10">Tháng</th>
@@ -250,419 +157,162 @@
                             <tr class="bg-slate-800 text-white text-[9px] uppercase tracking-wider font-semibold">
                                 <th class="p-2 border-r border-slate-700 text-right">PC Chức Vụ</th>
                                 <th class="p-2 border-r border-slate-700 text-right">PC Khu Vực</th>
-                                <th class="p-2 border-r border-slate-700 text-right">PC Ưu Đãi (%)</th>
+                                <th class="p-2 border-r border-slate-700 text-right">PC Ưu Đãi (60%)</th>
                                 <th class="p-2 border-r border-slate-700 text-right">PC Trách Nhiệm</th>
                                 <th class="p-2 border-r border-slate-700 text-right">Thâm Niên (%)</th>
                                 <th class="p-2 border-r border-slate-700 text-right">PC Y Tế</th>
-                                <th class="p-2 border-r border-slate-700 text-right">PC Đặc biệt (%)</th>
+                                <th class="p-2 border-r border-slate-700 text-right">PC Đặc biệt (30%)</th>
                                 <th class="p-2 border-r border-slate-700 text-right bg-rose-900/20 text-rose-200">BHXH (8%)</th>
                                 <th class="p-2 border-r border-slate-700 text-right bg-rose-900/20 text-rose-200">BHYT (1.5%)</th>
                                 <th class="p-2 border-r border-slate-700 text-right bg-rose-900/20 text-rose-200">BHTN (1%)</th>
                                 <th class="p-2 border-r border-slate-700 text-center bg-rose-900/20 text-rose-200">Gốc đóng BH</th>
                             </tr>
                         </thead>
-
-                        <!-- Dynamic Table Body -->
-                        <tbody id="salary-table-body" class="divide-y divide-slate-200 text-xs">
-                            <!-- Injected dynamically via JS -->
-                        </tbody>
-
-                        <!-- Bottom Totals Footer -->
-                        <tfoot id="salary-table-foot" class="bg-slate-100 font-bold text-xs text-slate-900 border-t-2 border-slate-300">
-                            <!-- Injected dynamically via JS -->
-                        </tfoot>
+                        <tbody id="salary-table-body" class="divide-y divide-slate-200 text-xs"></tbody>
+                        <tfoot id="salary-table-foot" class="bg-slate-100 font-bold text-xs text-slate-900 border-t-2 border-slate-300 sticky bottom-0"></tfoot>
                     </table>
                 </div>
             </div>
 
-            <!-- Mathematical Formula Explanation Accordion -->
             <div class="bg-slate-100 border border-slate-200 rounded-xl p-4 flex gap-3 text-slate-600 text-xs leading-relaxed no-print">
-                <svg class="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <svg class="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
                 <div>
-                    <span class="font-bold text-slate-800 text-xs uppercase">Nguyên tắc tính toán tự động dựa trên cơ chế Excel:</span>
+                    <span class="font-bold text-slate-800 text-xs uppercase">Nguyên tắc tính toán tự động (Lương cơ sở 2.530.000₫, ưu đãi 60%):</span>
                     <ul class="list-disc pl-4 mt-2 space-y-1.5 text-slate-600">
-                        <li><span class="font-semibold text-slate-700">Phụ cấp ưu đãi</span> = Hệ số lương $\times$ Tỷ lệ % ưu đãi. (Ví dụ: $4.32 \times 50\% = 2.16$)</li>
-                        <li><span class="font-semibold text-slate-700">Phụ cấp thâm niên nghề</span> = (Hệ số lương + Phụ cấp chức danh) $\times$ Tỷ lệ % thâm niên. (Ví dụ: $(4.32 + 0) \times 22\% = 0.9504$)</li>
-                        <li><span class="font-semibold text-slate-700">Phụ cấp đặc biệt</span> = Hệ số lương $\times$ Tỷ lệ % đặc biệt. (Ví dụ: $4.32 \times 30\% = 1.296$)</li>
-                        <li><span class="font-semibold text-slate-700">Cơ sở tính bảo hiểm (Gốc đóng BH)</span> = Hệ số lương + Phụ cấp chức danh + Phụ cấp thâm niên nghề.</li>
-                        <li><span class="font-semibold text-slate-700">Bảo hiểm trích nộp</span>: BHXH đóng 8%, BHYT đóng 1.5%, BHTN đóng 1%. Các khoản trích nộp được tự động làm tròn đơn vị Đồng lẻ.</li>
+                        <li><span class="font-semibold text-slate-700">Phụ cấp ưu đãi</span> = (Hệ số lương + PC chức vụ) × 60%.</li>
+                        <li><span class="font-semibold text-slate-700">Phụ cấp thâm niên nghề</span> = (Hệ số lương + PC chức vụ) × Tỷ lệ % thâm niên.</li>
+                        <li><span class="font-semibold text-slate-700">Phụ cấp đặc biệt</span> = (Hệ số lương + PC chức vụ) × 30%.</li>
+                        <li><span class="font-semibold text-slate-700">Cơ sở tính bảo hiểm</span> = Hệ số lương + PC chức vụ + PC thâm niên.</li>
+                        <li><span class="font-semibold text-slate-700">Bảo hiểm trích nộp</span>: BHXH 8%, BHYT 1.5%, BHTN 1% trên cơ sở đóng.</li>
                     </ul>
                 </div>
             </div>
         </section>
 
-        <!-- Tab 2: THỐNG KÊ & BIỂU ĐỒ -->
+        <!-- Tab 2: Thống kê -->
         <section id="view-dashboard" class="tab-view hidden space-y-6">
-            <!-- Summary KPI Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center gap-4">
-                    <div class="p-3.5 bg-indigo-50 text-indigo-600 rounded-xl">
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-xs text-slate-500 font-medium">Nhân sự thanh toán</p>
-                        <p id="kpi-count" class="text-2xl font-black text-slate-900 mt-1">0</p>
-                    </div>
+                    <div class="p-3.5 bg-indigo-50 text-indigo-600 rounded-xl"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg></div>
+                    <div><p class="text-xs text-slate-500 font-medium">Nhân sự thanh toán</p><p id="kpi-count" class="text-2xl font-black text-slate-900 mt-1">0</p></div>
                 </div>
-
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center gap-4">
-                    <div class="p-3.5 bg-blue-50 text-blue-600 rounded-xl">
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-xs text-slate-500 font-medium">Tổng quỹ lương phát sinh</p>
-                        <p id="kpi-gross" class="text-xl font-extrabold text-slate-900 mt-1">0₫</p>
-                    </div>
+                    <div class="p-3.5 bg-blue-50 text-blue-600 rounded-xl"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+                    <div><p class="text-xs text-slate-500 font-medium">Tổng quỹ lương phát sinh</p><p id="kpi-gross" class="text-xl font-extrabold text-slate-900 mt-1">0₫</p></div>
                 </div>
-
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center gap-4">
-                    <div class="p-3.5 bg-rose-50 text-rose-600 rounded-xl">
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-xs text-slate-500 font-medium">Bảo hiểm cá nhân nộp</p>
-                        <p id="kpi-deduction" class="text-xl font-extrabold text-rose-700 mt-1">0₫</p>
-                    </div>
+                    <div class="p-3.5 bg-rose-50 text-rose-600 rounded-xl"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg></div>
+                    <div><p class="text-xs text-slate-500 font-medium">Bảo hiểm cá nhân nộp</p><p id="kpi-deduction" class="text-xl font-extrabold text-rose-700 mt-1">0₫</p></div>
                 </div>
-
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 flex items-center gap-4">
-                    <div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-xl">
-                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <div>
-                        <p class="text-xs text-slate-500 font-medium">Thực nhận chuyển khoản</p>
-                        <p id="kpi-net" class="text-xl font-extrabold text-emerald-700 mt-1">0₫</p>
-                    </div>
+                    <div class="p-3.5 bg-emerald-50 text-emerald-600 rounded-xl"><svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+                    <div><p class="text-xs text-slate-500 font-medium">Thực nhận chuyển khoản</p><p id="kpi-net" class="text-xl font-extrabold text-emerald-700 mt-1">0₫</p></div>
                 </div>
             </div>
-
-            <!-- Visual Bar Graphs -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <!-- Chart 1: Lương gộp vs Thực nhận -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
-                    <h3 class="text-xs font-extrabold text-slate-900 uppercase tracking-wide flex items-center gap-2">
-                        <span class="w-1.5 h-3.5 bg-indigo-600 rounded"></span>
-                        Cơ cấu thực nhận so với lương tháng (VNĐ)
-                    </h3>
-                    <div id="dashboard-bar-chart" class="space-y-4">
-                        <!-- Bars dynamically rendered here -->
-                    </div>
+                    <h3 class="text-xs font-extrabold text-slate-900 uppercase tracking-wide flex items-center gap-2"><span class="w-1.5 h-3.5 bg-indigo-600 rounded"></span>Cơ cấu thực nhận so với lương tháng (VNĐ)</h3>
+                    <div id="dashboard-bar-chart" class="space-y-4"></div>
                     <div class="flex justify-center gap-4 text-[10px] font-bold text-slate-500 pt-3 border-t border-slate-100">
-                        <div class="flex items-center gap-1.5">
-                            <span class="w-3 h-2 bg-indigo-500 rounded"></span>
-                            <span>Lương Tháng</span>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <span class="w-3 h-2 bg-emerald-500 rounded"></span>
-                            <span>Thực Nhận</span>
-                        </div>
+                        <div class="flex items-center gap-1.5"><span class="w-3 h-2 bg-indigo-500 rounded"></span><span>Lương Tháng</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-3 h-2 bg-emerald-500 rounded"></span><span>Thực Nhận</span></div>
                     </div>
                 </div>
-
-                <!-- Chart 2: Cơ cấu hệ số phụ cấp -->
                 <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
-                    <h3 class="text-xs font-extrabold text-slate-900 uppercase tracking-wide flex items-center gap-2">
-                        <span class="w-1.5 h-3.5 bg-amber-600 rounded"></span>
-                        Cấu phần tỷ lệ tổng hệ số phụ cấp (%)
-                    </h3>
-                    <div id="dashboard-composition-chart" class="space-y-4">
-                        <!-- Breakdown of coefficients -->
-                    </div>
+                    <h3 class="text-xs font-extrabold text-slate-900 uppercase tracking-wide flex items-center gap-2"><span class="w-1.5 h-3.5 bg-amber-600 rounded"></span>Cấu phần tỷ lệ tổng hệ số phụ cấp (%)</h3>
+                    <div id="dashboard-composition-chart" class="space-y-4"></div>
                 </div>
             </div>
         </section>
 
-        <!-- Tab 3: PHIẾU LƯƠNG CÁ NHÂN -->
+        <!-- Tab 3: Phiếu lương cá nhân có chỉnh sửa -->
         <section id="view-payslip" class="tab-view hidden grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Left Picker Sidebar -->
             <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 lg:col-span-1 space-y-4 no-print">
                 <h3 class="text-xs font-bold text-slate-950 uppercase tracking-wide pb-2 border-b border-slate-100 flex items-center gap-2">
-                    <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-                    </svg>
+                    <svg class="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                     Danh sách nhân viên
                 </h3>
-                <div id="payslip-selector-list" class="space-y-2 max-h-[380px] overflow-y-auto pr-1">
-                    <!-- Options populated via JS -->
-                </div>
+                <div id="payslip-selector-list" class="space-y-2 max-h-[380px] overflow-y-auto pr-1"></div>
             </div>
-
-            <!-- Right Printable Payslip -->
             <div class="lg:col-span-2">
                 <div class="bg-white p-6 sm:p-8 rounded-2xl shadow-sm border border-slate-200/85 space-y-6 print-card">
-                    
-                    <!-- Print control header -->
                     <div class="flex justify-end border-b border-slate-100 pb-4 no-print">
-                        <button
-                            onclick="window.print()"
-                            class="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-2 shadow-md transition-all active:scale-95"
-                        >
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                            </svg>
+                        <button onclick="window.print()" class="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-2 shadow-md transition-all active:scale-95">
+                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/></svg>
                             In phiếu lương
                         </button>
                     </div>
-
-                    <!-- Layout of Payslip -->
-                    <div id="payslip-layout" class="space-y-6">
-                        <!-- Inside content rendered dynamically -->
-                    </div>
+                    <div id="payslip-layout" class="space-y-6"></div>
                 </div>
             </div>
         </section>
 
     </main>
 
-    <!-- Modal 1: ADD & EDIT EMPLOYEE FORM -->
+    <!-- Modal 1: Thêm/Sửa nhân viên -->
     <div id="employee-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl w-full max-w-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
-            <!-- Header -->
             <div class="bg-slate-950 text-white p-5 flex justify-between items-center shrink-0">
-                <h3 id="modal-title" class="text-base font-bold flex items-center gap-2">
-                    <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                    </svg>
-                    Thêm bản ghi tính lương mới
-                </h3>
-                <button onclick="closeModal('employee-modal')" class="text-slate-400 hover:text-white transition-colors p-1">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+                <h3 id="modal-title" class="text-base font-bold flex items-center gap-2"><svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg> Thêm bản ghi tính lương mới</h3>
+                <button onclick="closeModal('employee-modal')" class="text-slate-400 hover:text-white transition-colors p-1"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
             </div>
-
-            <!-- Body Form Scrollable -->
             <form id="employee-form" class="p-6 overflow-y-auto space-y-5">
-                <input type="hidden" id="form-editing-id" value="">
-
-                <!-- Section 1 -->
+                <input type="hidden" id="form-editing-id" value="" />
                 <div class="space-y-3">
                     <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-600 border-b border-indigo-100 pb-1">1. Định danh nhân sự & Thời gian</h4>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Tháng / Năm:</label>
-                            <input 
-                                type="month" 
-                                id="form-month"
-                                required
-                                class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                            />
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Họ và Tên:</label>
-                            <input 
-                                type="text" 
-                                id="form-name"
-                                required
-                                placeholder="Ví dụ: Võ Thanh Đậm"
-                                class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-                            />
-                        </div>
+                        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Tháng / Năm:</label><input type="month" id="form-month" required class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none" /></div>
+                        <div class="sm:col-span-2"><label class="block text-xs font-semibold text-slate-600 mb-1">Họ và Tên:</label><input type="text" id="form-name" required placeholder="Ví dụ: Võ Thanh Đậm" class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none" /></div>
                     </div>
                 </div>
-
-                <!-- Section 2 -->
                 <div class="space-y-3">
                     <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-600 border-b border-indigo-100 pb-1">2. Trình độ Ngạch bậc & Chức vụ</h4>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Mã Ngạch:</label>
-                            <input 
-                                type="text" 
-                                id="form-ngach"
-                                required
-                                placeholder="Ví dụ: V.07.03.29"
-                                class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none uppercase"
-                            />
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Hệ số lương (HSL):</label>
-                            <input 
-                                type="number" 
-                                id="form-hsl"
-                                step="0.01"
-                                required
-                                value="2.34"
-                                class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono"
-                            />
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Phụ cấp Chức vụ:</label>
-                            <input 
-                                type="number" 
-                                id="form-pccv"
-                                step="0.01"
-                                value="0"
-                                class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono"
-                            />
-                        </div>
+                        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Mã Ngạch:</label><input type="text" id="form-ngach" required placeholder="V.07.03.29" class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none uppercase" /></div>
+                        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Hệ số lương (HSL):</label><input type="number" id="form-hsl" step="0.01" required value="2.34" class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono" /></div>
+                        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Phụ cấp Chức vụ:</label><input type="number" id="form-pccv" step="0.01" value="0" class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono" /></div>
                     </div>
                 </div>
-
-                <!-- Section 3 -->
                 <div class="space-y-3">
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-600 border-b border-indigo-100 pb-1">3. Phụ cấp theo tỷ lệ (%)</h4>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-600 border-b border-indigo-100 pb-1">3. Phụ cấp theo tỷ lệ</h4>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">PC Ưu Đãi (%):</label>
-                            <div class="relative">
-                                <input 
-                                    type="number" 
-                                    id="form-uudai-percent"
-                                    min="0"
-                                    max="100"
-                                    value="0"
-                                    class="w-full text-xs p-2.5 pr-8 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono"
-                                />
-                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">%</span>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Thâm Niên Nghề (%):</label>
-                            <div class="relative">
-                                <input 
-                                    type="number" 
-                                    id="form-pctn-percent"
-                                    min="0"
-                                    max="100"
-                                    value="0"
-                                    class="w-full text-xs p-2.5 pr-8 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono"
-                                />
-                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">%</span>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">PC Đặc Biệt (%):</label>
-                            <div class="relative">
-                                <input 
-                                    type="number" 
-                                    id="form-dacbiet-percent"
-                                    min="0"
-                                    max="100"
-                                    value="0"
-                                    class="w-full text-xs p-2.5 pr-8 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono"
-                                />
-                                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">%</span>
-                            </div>
-                        </div>
+                        <div><label class="block text-xs font-semibold text-slate-600 mb-1">Thâm Niên (%):</label><div class="relative"><input type="number" id="form-pctn-percent" min="0" max="100" value="0" class="w-full text-xs p-2.5 pr-8 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono" /><span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">%</span></div></div>
+                        <div><label class="block text-xs font-semibold text-slate-600 mb-1">PC Trách nhiệm:</label><input type="number" id="form-pctnh" step="0.01" value="0" class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono" /></div>
+                        <div><label class="block text-xs font-semibold text-slate-600 mb-1">PC Y Tế:</label><input type="number" id="form-pcyte" step="0.0001" value="0" class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono" /></div>
                     </div>
                 </div>
-
-                <!-- Section 4 -->
                 <div class="space-y-3">
                     <h4 class="text-xs font-bold uppercase tracking-wider text-indigo-600 border-b border-indigo-100 pb-1">4. Các khoản hệ số phụ cấp khác</h4>
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">PC Khu vực:</label>
-                            <input 
-                                type="number" 
-                                id="form-pckv"
-                                step="0.01"
-                                value="0"
-                                class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono"
-                            />
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">PC Trách nhiệm:</label>
-                            <input 
-                                type="number" 
-                                id="form-pctnh"
-                                step="0.01"
-                                value="0"
-                                class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono"
-                            />
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">PC Ngành Y Tế:</label>
-                            <input 
-                                type="number" 
-                                id="form-pcyte"
-                                step="0.0001"
-                                value="0"
-                                class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono"
-                            />
-                        </div>
+                        <div><label class="block text-xs font-semibold text-slate-600 mb-1">PC Khu vực:</label><input type="number" id="form-pckv" step="0.01" value="0" class="w-full text-xs p-2.5 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono" /></div>
+                        <div><label class="block text-xs font-semibold text-slate-600 mb-1">PC Đặc biệt (%):</label><div class="relative"><input type="number" id="form-dacbiet-percent" min="0" max="100" value="30" class="w-full text-xs p-2.5 pr-8 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none font-mono" /><span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 font-bold">%</span></div></div>
                     </div>
                 </div>
-
-                <!-- Actions -->
                 <div class="flex justify-end gap-2 pt-4 border-t border-slate-100 shrink-0">
-                    <button
-                        type="button"
-                        onclick="closeModal('employee-modal')"
-                        class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl transition-all"
-                    >
-                        Hủy bỏ
-                    </button>
-                    <button
-                        type="submit"
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-md transition-all"
-                    >
-                        Lưu thông tin
-                    </button>
+                    <button type="button" onclick="closeModal('employee-modal')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl transition-all">Hủy bỏ</button>
+                    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-md transition-all">Lưu thông tin</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Modal 2: IMPORT CSV -->
+    <!-- Modal 2: Import CSV -->
     <div id="import-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
             <div class="bg-slate-950 text-white p-5 flex justify-between items-center">
-                <h3 class="text-base font-bold flex items-center gap-2">
-                    <svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                    </svg>
-                    Nhập danh sách từ dữ liệu CSV
-                </h3>
-                <button onclick="closeModal('import-modal')" class="text-slate-400 hover:text-white transition-colors">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
+                <h3 class="text-base font-bold flex items-center gap-2"><svg class="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg> Nhập danh sách từ dữ liệu CSV</h3>
+                <button onclick="closeModal('import-modal')" class="text-slate-400 hover:text-white transition-colors"><svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
             </div>
-
             <div class="p-6 space-y-4 overflow-y-auto">
                 <div class="text-xs text-slate-500 space-y-2 leading-relaxed">
-                    <p>Sao chép và dán trực tiếp dữ liệu thô dạng văn bản phân tách bằng dấu phẩy (CSV) từ phần mềm của bạn. Thứ tự cấu trúc cột bắt buộc:</p>
-                    <code class="block bg-slate-100 p-2.5 rounded-xl text-[10px] font-mono break-all text-slate-700">
-                        Tháng,Họ tên,Mã ngạch,Hệ số lương,PC Chức vụ,PC Khu vực,Ưu đãi %,PC Trách nhiệm,Thâm niên %,PC Y tế,Đặc biệt %
-                    </code>
-                    <p class="font-bold text-amber-600">Lưu ý: Dòng đầu tiên là tiêu đề cột và sẽ được ứng dụng bỏ qua khi xử lý.</p>
+                    <p>Sao chép và dán trực tiếp dữ liệu thô dạng văn bản phân tách bằng dấu phẩy (CSV). Thứ tự cấu trúc cột bắt buộc:</p>
+                    <code class="block bg-slate-100 p-2.5 rounded-xl text-[10px] font-mono break-all text-slate-700">Tháng,Họ tên,Mã ngạch,Hệ số lương,PC Chức vụ,PC Khu vực,PC Trách nhiệm,Thâm niên %,PC Y tế,Đặc biệt %</code>
+                    <p class="font-bold text-amber-600">Lưu ý: Dòng đầu tiên là tiêu đề cột và sẽ được bỏ qua.</p>
                 </div>
-
-                <textarea
-                    id="csv-text-input"
-                    rows="7"
-                    placeholder="2026-06,Võ Thanh Đậm,V.07.03.29,4.32,0,0.5,50,0,23,0,30"
-                    class="w-full text-xs font-mono p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-slate-50 focus:bg-white"
-                ></textarea>
-
+                <textarea id="csv-text-input" rows="7" placeholder="2026-07,Võ Thanh Đậm,V.07.03.29,4.32,0,0.5,0,22,0,30" class="w-full text-xs font-mono p-3 rounded-xl border border-slate-300 focus:ring-2 focus:ring-indigo-500 focus:outline-none bg-slate-50 focus:bg-white"></textarea>
                 <div class="flex justify-end gap-2 pt-2">
-                    <button
-                        type="button"
-                        onclick="closeModal('import-modal')"
-                        class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl transition-all"
-                    >
-                        Quay lại
-                    </button>
-                    <button
-                        onclick="processCsvImport()"
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md transition-all"
-                    >
-                        Bắt đầu nhập
-                    </button>
+                    <button type="button" onclick="closeModal('import-modal')" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs px-4 py-2.5 rounded-xl transition-all">Quay lại</button>
+                    <button onclick="processCsvImport()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-md transition-all">Bắt đầu nhập</button>
                 </div>
             </div>
         </div>
@@ -671,544 +321,349 @@
     <!-- Footer -->
     <footer class="bg-white border-t border-slate-200 py-6 mt-12 no-print shrink-0">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-2">
-            <p class="text-xs text-slate-500">© Copyright Võ Thanh Đậm 2026. Hệ thống quản lý lương cán bộ công chức viên chức - Dịch vụ Y tế / Giáo dục hành chính sự nghiệp.</p>
-            <p class="text-[10px] text-slate-400">Ứng dụng tuân thủ nghiêm ngặt theo các chính sách đóng BHXH 8%, BHYT 1.5%, BHTN 1% từ phần nền đóng chính của Nhà nước.</p>
+            <p class="text-xs text-slate-500">© Bảng lương HCSN tháng 7/2026 – Trường Tiểu học Trần Quốc Toản</p>
+            <p class="text-[10px] text-slate-400">Áp dụng lương cơ sở 2.530.000₫, hệ số ưu đãi 60% theo quy định.</p>
         </div>
     </footer>
 
-    <!-- Core Business Logic Script -->
     <script>
-        // Initial dataset populated based on Excel records
-        let employees = [
-            {
-                id: '1',
-                month: '2025-06',
-                name: 'Võ Thanh Đậm',
-                ngach: 'V.07.03.29',
-                heSoLuong: 4.32,
-                pcChucVu: 0,
-                pcKhuVuc: 0.5,
-                uuDaiPercent: 50, 
-                pcTrachNhiem: 0,
-                pctnPercent: 22, 
-                pcYTe: 0, 
-                dacBietPercent: 30
-            },
-            {
-                id: '2',
-                month: '2026-07',
-                name: 'Võ Thanh Đậm',
-                ngach: 'V.07.03.29',
-                heSoLuong: 4.32,
-                pcChucVu: 0,
-                pcKhuVuc: 0.5,
-                uuDaiPercent: 60,
-                pcTrachNhiem: 0,
-                pctnPercent: 23,
-                pcYTe: 0, // Based on calculated or recorded yte
-                dacBietPercent: 30
-            },
-            {
-                id: '3',
-                month: '2027-06',
-                name: 'Võ Thanh Đậm',
-                ngach: 'V.07.03.29',
-                heSoLuong: 4.65,
-                pcChucVu: 0,
-                pcKhuVuc: 0.5,
-                uuDaiPercent: 60,
-                pcTrachNhiem: 0,
-                pctnPercent: 24,
-                pcYTe: 0, // Based on calculated or recorded yte
-                dacBietPercent: 30
-            }
+        // ================================================================
+        //  DỮ LIỆU MẶC ĐỊNH (chỉ dùng khi localStorage trống)
+        // ================================================================
+        const DEFAULT_EMPLOYEES = [
+            { id: '1',  month: '2026-07', name: 'Đỗ Quang Hùng',      ngach: 'V.07.03.28', heSoLuong: 6.38, pcChucVu: 0.5, pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 19, pcYTe: 0, dacBietPercent: 30 },
+            { id: '2',  month: '2026-07', name: 'Nguyễn Thị Mai',       ngach: 'V.07.03.28', heSoLuong: 5.70, pcChucVu: 0.4, pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 31, pcYTe: 0, dacBietPercent: 30 },
+            { id: '3',  month: '2026-07', name: 'Trần Sỹ Thiện',        ngach: 'V.07.03.29', heSoLuong: 4.65, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 26, pcYTe: 0, dacBietPercent: 30 },
+            { id: '4',  month: '2026-07', name: 'Lê Thu Hạnh',          ngach: 'V.07.03.29', heSoLuong: 4.98, pcChucVu: 0.15, pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 28, pcYTe: 0, dacBietPercent: 30 },
+            { id: '5',  month: '2026-07', name: 'Nguyễn Thị Vẽ',        ngach: 'V.07.03.29', heSoLuong: 3.33, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 8,  pcYTe: 0, dacBietPercent: 30 },
+            { id: '6',  month: '2026-07', name: 'Trần Thị Dung',        ngach: 'V.07.03.28', heSoLuong: 5.02, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 27, pcYTe: 0, dacBietPercent: 30 },
+            { id: '7',  month: '2026-07', name: 'Ngô Hoàng Linh',       ngach: 'V.07.03.28', heSoLuong: 5.02, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 25, pcYTe: 0, dacBietPercent: 30 },
+            { id: '8',  month: '2026-07', name: 'Phạm Thị Ngát',        ngach: 'V.07.03.28', heSoLuong: 4.68, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 25, pcYTe: 0, dacBietPercent: 30 },
+            { id: '9',  month: '2026-07', name: 'Nguyễn Thị Hiếu',      ngach: 'V.07.03.28', heSoLuong: 4.68, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 24, pcYTe: 0, dacBietPercent: 30 },
+            { id: '10', month: '2026-07', name: 'Trương Hoàng Đệ',      ngach: 'V.07.03.28', heSoLuong: 4.68, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 24, pcYTe: 0, dacBietPercent: 30 },
+            { id: '11', month: '2026-07', name: 'Lê Văn Quẩn',          ngach: 'V.07.03.28', heSoLuong: 4.68, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 23, pcYTe: 0, dacBietPercent: 30 },
+            { id: '12', month: '2026-07', name: 'Lê Khánh Băng',        ngach: 'V.07.03.29', heSoLuong: 3.99, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 18, pcYTe: 0, dacBietPercent: 30 },
+            { id: '13', month: '2026-07', name: 'Lê Thị Thơm',          ngach: 'V.07.03.29', heSoLuong: 3.66, pcChucVu: 0.2, pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 14, pcYTe: 0, dacBietPercent: 30 },
+            { id: '14', month: '2026-07', name: 'Hồ Thị Cẩm Tú',        ngach: 'V.07.03.29', heSoLuong: 3.66, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 14, pcYTe: 0, dacBietPercent: 30 },
+            { id: '15', month: '2026-07', name: 'Trần Thị Loan',        ngach: 'V.07.03.29', heSoLuong: 3.66, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 11, pcYTe: 0, dacBietPercent: 30 },
+            { id: '16', month: '2026-07', name: 'Nguyễn Thị Dung',      ngach: 'V.07.03.29', heSoLuong: 3.66, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 11, pcYTe: 0, dacBietPercent: 30 },
+            { id: '17', month: '2026-07', name: 'Nguyễn Thị Anh Tươi',  ngach: 'V.07.03.29', heSoLuong: 3.66, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 11, pcYTe: 0, dacBietPercent: 30 },
+            { id: '18', month: '2026-07', name: 'Ngô Thị Phương Thùy',  ngach: 'V.07.03.29', heSoLuong: 3.33, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 10, pcYTe: 0, dacBietPercent: 30 },
+            { id: '19', month: '2026-07', name: 'Nguyễn Thành Hiếu',    ngach: 'V.07.03.29', heSoLuong: 3.33, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 10, pcYTe: 0, dacBietPercent: 30 },
+            { id: '20', month: '2026-07', name: 'Trần Linh Phương',     ngach: 'V.07.03.29', heSoLuong: 2.34, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 7,  pcYTe: 0, dacBietPercent: 30 },
+            { id: '21', month: '2026-07', name: 'Trần Thị Ngọc Huyền',  ngach: 'V.07.03.29', heSoLuong: 3.00, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 7,  pcYTe: 0, dacBietPercent: 30 },
+            { id: '22', month: '2026-07', name: 'Vũ Thị Cúc',           ngach: 'V.07.03.29', heSoLuong: 4.65, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 26, pcYTe: 0, dacBietPercent: 30 },
+            { id: '23', month: '2026-07', name: 'Nguyễn Thị Thủy',      ngach: 'V.07.03.29', heSoLuong: 4.65, pcChucVu: 0.2, pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 24, pcYTe: 0, dacBietPercent: 30 },
+            { id: '24', month: '2026-07', name: 'Vũ Thị Hà',            ngach: 'V.07.03.29', heSoLuong: 4.65, pcChucVu: 0.2, pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 23, pcYTe: 0, dacBietPercent: 30 },
+            { id: '25', month: '2026-07', name: 'Võ Thanh Đậm',         ngach: 'V.07.03.29', heSoLuong: 4.32, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 23, pcYTe: 0, dacBietPercent: 30 },
+            { id: '26', month: '2026-07', name: 'Nguyễn Thanh Vinh',    ngach: 'V.07.03.29', heSoLuong: 3.99, pcChucVu: 0.15, pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 21, pcYTe: 0, dacBietPercent: 30 },
+            { id: '27', month: '2026-07', name: 'Thị Liễu',             ngach: 'V.07.03.29', heSoLuong: 3.99, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 19, pcYTe: 0, dacBietPercent: 30 },
+            { id: '28', month: '2026-07', name: 'Nguyễn Huỳnh Bích Thủy', ngach: 'V.07.03.29', heSoLuong: 3.99, pcChucVu: 0.15, pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 18, pcYTe: 0, dacBietPercent: 30 },
+            { id: '29', month: '2026-07', name: 'Trần Phi Huy',         ngach: 'V.07.03.29', heSoLuong: 3.66, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 12, pcYTe: 0, dacBietPercent: 30 },
+            { id: '30', month: '2026-07', name: 'Bùi Thị Cẩm Nhung',    ngach: 'V.07.03.29', heSoLuong: 3.66, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 12, pcYTe: 0, dacBietPercent: 30 },
+            { id: '31', month: '2026-07', name: 'Nguyễn Văn Nghĩa',     ngach: 'V.07.03.29', heSoLuong: 3.66, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 12, pcYTe: 0, dacBietPercent: 30 },
+            { id: '32', month: '2026-07', name: 'Lê Thị Kiều Diễm',     ngach: 'V.07.03.29', heSoLuong: 3.66, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 12, pcYTe: 0, dacBietPercent: 30 },
+            { id: '33', month: '2026-07', name: 'Trần Thị Kim Lan',     ngach: 'V.07.03.29', heSoLuong: 3.66, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 12, pcYTe: 0, dacBietPercent: 30 },
+            { id: '34', month: '2026-07', name: 'Nguyễn Thị Thẩm',      ngach: 'V.07.03.29', heSoLuong: 3.66, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 11, pcYTe: 0, dacBietPercent: 30 },
+            { id: '35', month: '2026-07', name: 'Nguyễn Đăng Giáp',     ngach: '16.119',     heSoLuong: 3.06, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0.1, pctnPercent: 20, pcYTe: 0, dacBietPercent: 30 },
+            { id: '36', month: '2026-07', name: 'Đặng Thị Mĩ Hương',    ngach: 'V.07.03.29', heSoLuong: 3.33, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 9,  pcYTe: 0, dacBietPercent: 30 },
+            { id: '37', month: '2026-07', name: 'Trần Văn Vũ',          ngach: 'V.07.03.29', heSoLuong: 3.33, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 10, pcYTe: 0, dacBietPercent: 30 },
+            { id: '38', month: '2026-07', name: 'Mai Thị Ngọc',         ngach: 'V.07.03.29', heSoLuong: 3.00, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 7,  pcYTe: 0, dacBietPercent: 30 },
+            { id: '39', month: '2026-07', name: 'Lê Thị Xoan',          ngach: 'V.07.03.07', heSoLuong: 3.00, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0.3, pctnPercent: 7,  pcYTe: 0, dacBietPercent: 30 },
+            { id: '40', month: '2026-07', name: 'Lê Ngọc Bích',         ngach: 'V.07.03.29', heSoLuong: 3.66, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 11, pcYTe: 0, dacBietPercent: 30 },
+            { id: '41', month: '2026-07', name: 'Nguyễn Thị Bảo Luyến', ngach: 'V.07.03.29', heSoLuong: 3.33, pcChucVu: 0,   pcKhuVuc: 0.5, pcTrachNhiem: 0,  pctnPercent: 11, pcYTe: 0, dacBietPercent: 30 },
+            { id: '42', month: '2026-07', name: 'Phan Thị Thuỳ Duyên',  ngach: '',           heSoLuong: 2.34, pcChucVu: 0.2, pcKhuVuc: 0.5, pcTrachNhiem: 0.1, pctnPercent: 0,  pcYTe: 0, dacBietPercent: 30 }
         ];
 
-        let baseSalary = 2530000; // Default base salary VND
+        // ================================================================
+        //  BIẾN TOÀN CỤC
+        // ================================================================
+        let employees = [];
+        let baseSalary = 2530000;
         let currentTab = 'table';
         let filterMonth = 'All';
         let searchTerm = '';
         let selectedPayslipId = '1';
-
-        // Modal Action Queue callbacks
         let confirmAction = null;
 
-        // On document ready
-        window.addEventListener('DOMContentLoaded', () => {
-            // Setup base salary inputs
-            const bInput = document.getElementById('base-salary-input');
-            bInput.value = baseSalary;
-            bInput.addEventListener('change', (e) => {
-                const newVal = parseInt(e.target.value) || 0;
-                if (newVal > 0) {
-                    baseSalary = newVal;
-                    showToast('Đã cập nhật lương cơ sở mới!');
-                    renderAll();
-                }
-            });
+        // ================================================================
+        //  LOCAL STORAGE
+        // ================================================================
+        const STORAGE_KEY = 'salaryData';
 
-            document.getElementById('reset-base-salary').addEventListener('click', () => {
-                baseSalary = 2530000;
-                bInput.value = baseSalary;
-                showToast('Đã đặt lại mức lương cơ sở về 2,530,000đ!');
-                renderAll();
-            });
-
-            // Form Submit handler
-            document.getElementById('employee-form').addEventListener('submit', handleFormSubmit);
-
-            // Setup confirm actions
-            document.getElementById('confirm-cancel-btn').addEventListener('click', closeConfirm);
-            document.getElementById('confirm-ok-btn').addEventListener('click', () => {
-                if (confirmAction) confirmAction();
-                closeConfirm();
-            });
-
-            // Run initial renders
-            renderAll();
-        });
-
-        // Show standard custom toast
-        function showToast(message, type = 'success') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl transition-all duration-300 border text-xs font-semibold bg-white translate-y-2 opacity-0 ${
-                type === 'success' 
-                    ? 'border-emerald-200 text-emerald-800 bg-emerald-50/90' 
-                    : 'border-rose-200 text-rose-800 bg-rose-50/90'
-            }`;
-            
-            const icon = type === 'success' 
-                ? `<svg class="w-4.5 h-4.5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>`
-                : `<svg class="w-4.5 h-4.5 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`;
-
-            toast.innerHTML = `${icon}<span>${message}</span>`;
-            container.appendChild(toast);
-            
-            // Trigger animation
-            setTimeout(() => {
-                toast.classList.remove('translate-y-2', 'opacity-0');
-            }, 10);
-
-            // Self cleanup
-            setTimeout(() => {
-                toast.classList.add('translate-y-2', 'opacity-0');
-                setTimeout(() => {
-                    toast.remove();
-                }, 300);
-            }, 3500);
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(employees));
+            } catch (e) {
+                console.warn('Không thể lưu vào localStorage:', e);
+            }
         }
 
-        // Custom Confirm dialog helper
-        function showConfirm(title, message, onConfirm) {
+        function loadFromLocalStorage() {
+            try {
+                const data = localStorage.getItem(STORAGE_KEY);
+                if (data) {
+                    const parsed = JSON.parse(data);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        employees = parsed;
+                        return true;
+                    }
+                }
+            } catch (e) {
+                console.warn('Không thể đọc dữ liệu từ localStorage:', e);
+            }
+            return false;
+        }
+
+        function resetToDefaultData() {
+            employees = JSON.parse(JSON.stringify(DEFAULT_EMPLOYEES));
+            saveToLocalStorage();
+            showToast('Đã khôi phục dữ liệu mặc định!');
+            renderAll();
+        }
+
+        // Nút xóa dữ liệu đã lưu (reset về mặc định)
+        function resetData() {
+            showConfirm('Xóa dữ liệu đã lưu', 'Bạn có chắc chắn muốn xóa toàn bộ dữ liệu đã lưu và khôi phục về danh sách mặc định?', () => {
+                resetToDefaultData();
+            });
+        }
+
+        // ================================================================
+        //  TOAST & CONFIRM
+        // ================================================================
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `flex items-center gap-3 px-4 py-3 rounded-xl shadow-xl transition-all duration-300 border text-xs font-semibold bg-white translate-y-2 opacity-0 ${type === 'success' ? 'border-emerald-200 text-emerald-800 bg-emerald-50/90' : 'border-rose-200 text-rose-800 bg-rose-50/90'}`;
+            const icon = type === 'success' ? `<svg class="w-4.5 h-4.5 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>` : `<svg class="w-4.5 h-4.5 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>`;
+            toast.innerHTML = `${icon}<span>${msg}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+            setTimeout(() => { toast.classList.add('translate-y-2', 'opacity-0'); setTimeout(() => toast.remove(), 300); }, 3500);
+        }
+
+        function showConfirm(title, msg, onConfirm) {
             document.getElementById('confirm-title').innerText = title;
-            document.getElementById('confirm-message').innerText = message;
+            document.getElementById('confirm-message').innerText = msg;
             document.getElementById('confirm-modal').classList.remove('hidden');
             confirmAction = onConfirm;
         }
+        function closeConfirm() { document.getElementById('confirm-modal').classList.add('hidden'); confirmAction = null; }
+        document.getElementById('confirm-cancel-btn').addEventListener('click', closeConfirm);
+        document.getElementById('confirm-ok-btn').addEventListener('click', () => { if (confirmAction) confirmAction(); closeConfirm(); });
 
-        function closeConfirm() {
-            document.getElementById('confirm-modal').classList.add('hidden');
-            confirmAction = null;
-        }
-
-        // Mathematical calculation helper for each employee record
+        // ================================================================
+        //  CÔNG THỨC TÍNH LƯƠNG
+        // ================================================================
         function calculateSalary(emp) {
             const hsl = parseFloat(emp.heSoLuong) || 0;
             const pccv = parseFloat(emp.pcChucVu) || 0;
             const pckv = parseFloat(emp.pcKhuVuc) || 0;
             const pctnPercent = parseFloat(emp.pctnPercent) || 0;
-            
-            // Phụ cấp thâm niên nghề = (HSL + PCCV) * pctn%
-            const pcThamNien = (hsl + pccv) * (pctnPercent / 100);
-
-            const uuDaiPercent = parseFloat(emp.uuDaiPercent) || 0;
-            // Phụ cấp ưu đãi = HSL * ưu đãi%
-            const pcUuDai = hsl * (uuDaiPercent / 100);
-
             const pctnh = parseFloat(emp.pcTrachNhiem) || 0;
             const pcyte = parseFloat(emp.pcYTe) || 0;
-
             const dacBietPercent = parseFloat(emp.dacBietPercent) || 0;
-            // Phụ cấp đặc biệt = HSL * đặc biệt%
-            const pcDacBiet = hsl * (dacBietPercent / 100);
 
-            // Cộng hệ số
+            const pcUuDai = (hsl + pccv) * 0.6;
+            const pcThamNien = (hsl + pccv) * (pctnPercent / 100);
+            const pcDacBiet = (hsl + pccv) * (dacBietPercent / 100);
+
             const tongHeSo = hsl + pccv + pckv + pcUuDai + pctnh + pcThamNien + pcyte + pcDacBiet;
-
-            // Tiền lương tháng
             const tienLuongThang = Math.round(tongHeSo * baseSalary);
-
-            // Nền tảng đóng bảo hiểm (Gốc đóng BH)
             const heSoDongBaoHiem = hsl + pccv + pcThamNien;
             const mucDongBaoHiem = heSoDongBaoHiem * baseSalary;
-
-            // Khấu trừ cá nhân
-            const bhxh = Math.round(mucDongBaoHiem * 0.08); // 8%
-            const bhyt = Math.round(mucDongBaoHiem * 0.015); // 1.5%
-            const bhtn = Math.round(mucDongBaoHiem * 0.01); // 1%
+            const bhxh = Math.round(mucDongBaoHiem * 0.08);
+            const bhyt = Math.round(mucDongBaoHiem * 0.015);
+            const bhtn = Math.round(mucDongBaoHiem * 0.01);
             const tongKhauTru = bhxh + bhyt + bhtn;
-
-            // Thực lãnh
             const thucLanh = tienLuongThang - tongKhauTru;
 
-            return {
-                ...emp,
-                pcThamNien,
-                pcUuDai,
-                pcDacBiet,
-                tongHeSo,
-                tienLuongThang,
-                mucDongBaoHiem,
-                bhxh,
-                bhyt,
-                bhtn,
-                tongKhauTru,
-                thucLanh
-            };
+            return { ...emp, pcThamNien, pcUuDai, pcDacBiet, tongHeSo, tienLuongThang, mucDongBaoHiem, bhxh, bhyt, bhtn, tongKhauTru, thucLanh };
         }
 
-        // Return a list of all employees calculated
-        function getCalculatedData() {
-            return employees.map(emp => calculateSalary(emp));
-        }
-
-        // Return filtered list
+        function getCalculatedData() { return employees.map(e => calculateSalary(e)); }
         function getFilteredData() {
-            const calculated = getCalculatedData();
-            return calculated.filter(emp => {
-                const matchMonth = filterMonth === 'All' || emp.month === filterMonth;
-                const matchSearch = emp.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                                    emp.ngach.toLowerCase().includes(searchTerm.toLowerCase());
+            const data = getCalculatedData();
+            return data.filter(e => {
+                const matchMonth = filterMonth === 'All' || e.month === filterMonth;
+                const matchSearch = e.name.toLowerCase().includes(searchTerm.toLowerCase()) || e.ngach.toLowerCase().includes(searchTerm.toLowerCase());
                 return matchMonth && matchSearch;
             });
         }
 
-        // Format system values helper
-        function formatVND(num) {
-            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num).replace('₫', 'đ');
-        }
+        function formatVND(num) { return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(num).replace('₫', 'đ'); }
+        function formatHeSo(num) { if (num === 0 || isNaN(num)) return '-'; return num.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 4 }); }
 
-        function formatHeSo(num) {
-            if (num === 0 || isNaN(num)) return '-';
-            return num.toLocaleString('vi-VN', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
-        }
-
-        // Switch View Tabs
-        function switchTab(tabId) {
-            currentTab = tabId;
-            document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
-            document.getElementById(`view-${tabId}`).classList.remove('hidden');
-
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.className = "tab-btn flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900 flex-1 md:flex-none";
-            });
-            document.getElementById(`tab-btn-${tabId}`).className = "tab-btn flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all bg-white text-indigo-600 shadow-sm flex-1 md:flex-none";
-
-            renderAll();
-        }
-
-        // Filter triggers
-        function triggerFilter() {
-            searchTerm = document.getElementById('search-input').value;
-            filterMonth = document.getElementById('filter-month').value;
-            renderAll();
-        }
-
-        // Populate Month options based on dataset
-        function renderMonthDropdown() {
-            const dropdown = document.getElementById('filter-month');
-            const savedValue = filterMonth;
-            
-            // Clear but keep first
-            dropdown.innerHTML = '<option value="All">Tất cả các tháng</option>';
-            
-            const months = Array.from(new Set(employees.map(e => e.month))).sort().reverse();
-            months.forEach(m => {
-                const option = document.createElement('option');
-                option.value = m;
-                option.innerText = `Tháng ${m}`;
-                dropdown.appendChild(option);
-            });
-
-            dropdown.value = savedValue;
-        }
-
-        // Render functions registry
+        // ================================================================
+        //  RENDER
+        // ================================================================
         function renderAll() {
             renderMonthDropdown();
-            
             const filtered = getFilteredData();
             document.getElementById('count-badge').innerText = filtered.length;
-
-            if (currentTab === 'table') {
-                renderTable(filtered);
-            } else if (currentTab === 'dashboard') {
-                renderDashboard(filtered);
-            } else if (currentTab === 'payslip') {
-                renderPayslipView();
-            }
+            if (currentTab === 'table') renderTable(filtered);
+            else if (currentTab === 'dashboard') renderDashboard(filtered);
+            else if (currentTab === 'payslip') renderPayslipView();
         }
 
-        // Render Table list
+        function renderMonthDropdown() {
+            const dropdown = document.getElementById('filter-month');
+            const saved = filterMonth;
+            dropdown.innerHTML = '<option value="All">Tất cả các tháng</option>';
+            const months = Array.from(new Set(employees.map(e => e.month))).sort().reverse();
+            months.forEach(m => { const opt = document.createElement('option'); opt.value = m; opt.innerText = `Tháng ${m}`; dropdown.appendChild(opt); });
+            dropdown.value = saved;
+        }
+
         function renderTable(data) {
             const tbody = document.getElementById('salary-table-body');
             const tfoot = document.getElementById('salary-table-foot');
-
             if (data.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="19" class="text-center py-12 text-slate-400 font-medium">
-                            <div class="flex flex-col items-center gap-2">
-                                <svg class="w-8 h-8 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                                </svg>
-                                <span>Không tìm thấy bản ghi lương nào khớp!</span>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                tfoot.innerHTML = '';
-                return;
+                tbody.innerHTML = `<tr><td colspan="19" class="text-center py-12 text-slate-400 font-medium">Không có dữ liệu</td></tr>`;
+                tfoot.innerHTML = ''; return;
             }
-
-            let totals = {
-                hsl: 0, pccv: 0, pckv: 0, pcUuDai: 0, pctnh: 0, pcThamNien: 0, pcyte: 0, pcDacBiet: 0,
-                tongHeSo: 0, tienLuongThang: 0, bhxh: 0, bhyt: 0, bhtn: 0, totalTrừ: 0, thucLanh: 0
-            };
-
-            let rowsHtml = '';
+            let totals = { hsl: 0, pccv: 0, pckv: 0, pcUuDai: 0, pctnh: 0, pcThamNien: 0, pcyte: 0, pcDacBiet: 0, tongHeSo: 0, tienLuongThang: 0, bhxh: 0, bhyt: 0, bhtn: 0, totalTrừ: 0, thucLanh: 0 };
+            let rows = '';
             data.forEach(emp => {
-                totals.hsl += emp.heSoLuong;
-                totals.pccv += emp.pcChucVu;
-                totals.pckv += emp.pcKhuVuc;
-                totals.pcUuDai += emp.pcUuDai;
-                totals.pctnh += emp.pcTrachNhiem;
-                totals.pcThamNien += emp.pcThamNien;
-                totals.pcyte += emp.pcYTe;
-                totals.pcDacBiet += emp.pcDacBiet;
-                totals.tongHeSo += emp.tongHeSo;
-                totals.tienLuongThang += emp.tienLuongThang;
-                totals.bhxh += emp.bhxh;
-                totals.bhyt += emp.bhyt;
-                totals.bhtn += emp.bhtn;
-                totals.totalTrừ += emp.tongKhauTru;
-                totals.thucLanh += emp.thucLanh;
-
-                rowsHtml += `
-                    <tr class="hover:bg-slate-50 transition-colors">
-                        <td class="p-3 border-r border-slate-100 text-center font-mono font-semibold text-slate-600 bg-slate-50/50 sticky left-0 shadow-[2px_0_5px_rgba(0,0,0,0.01)]">${emp.month}</td>
-                        <td class="p-3 border-r border-slate-100 font-bold text-slate-950 bg-slate-50/50 sticky left-[100px] shadow-[2px_0_5px_rgba(0,0,0,0.01)] min-w-[150px]">${emp.name}</td>
-                        <td class="p-3 border-r border-slate-100 text-center font-mono text-slate-500 font-bold">${emp.ngach}</td>
-                        <td class="p-3 border-r border-slate-100 text-right font-mono font-medium">${formatHeSo(emp.heSoLuong)}</td>
-                        <td class="p-3 border-r border-slate-100 text-right font-mono text-slate-600">${formatHeSo(emp.pcChucVu)}</td>
-                        <td class="p-3 border-r border-slate-100 text-right font-mono text-slate-600">${formatHeSo(emp.pcKhuVuc)}</td>
-                        <td class="p-3 border-r border-slate-100 text-right font-mono text-slate-600">
-                            <span class="text-[9px] text-slate-400">(${emp.uuDaiPercent}%)</span> ${formatHeSo(emp.pcUuDai)}
-                        </td>
-                        <td class="p-3 border-r border-slate-100 text-right font-mono text-slate-600">${formatHeSo(emp.pcTrachNhiem)}</td>
-                        <td class="p-3 border-r border-slate-100 text-right font-mono text-slate-600">
-                            <span class="text-[9px] text-slate-400">(${emp.pctnPercent}%)</span> ${formatHeSo(emp.pcThamNien)}
-                        </td>
-                        <td class="p-3 border-r border-slate-100 text-right font-mono text-slate-600">${formatHeSo(emp.pcYTe)}</td>
-                        <td class="p-3 border-r border-slate-100 text-right font-mono text-slate-600">
-                            <span class="text-[9px] text-slate-400">(${emp.dacBietPercent}%)</span> ${formatHeSo(emp.pcDacBiet)}
-                        </td>
-                        <td class="p-3 border-r border-slate-100 text-right font-mono font-bold text-indigo-700 bg-indigo-50/30">${formatHeSo(emp.tongHeSo)}</td>
-                        <td class="p-3 border-r border-slate-100 text-right font-mono font-bold text-slate-900 bg-indigo-50/10">${formatVND(emp.tienLuongThang)}</td>
-                        <td class="p-3 border-r border-slate-100 text-right font-mono text-rose-700 bg-rose-50/10">${formatVND(emp.bhxh)}</td>
-                        <td class="p-3 border-r border-slate-100 text-right font-mono text-rose-700 bg-rose-50/10">${formatVND(emp.bhyt)}</td>
-                        <td class="p-3 border-r border-slate-100 text-right font-mono text-rose-700 bg-rose-50/10">${formatVND(emp.bhtn)}</td>
-                        <td class="p-3 border-r border-slate-100 text-right font-mono text-slate-400 bg-slate-50/25">${formatVND(emp.mucDongBaoHiem)}</td>
-                        <td class="p-3 border-r border-slate-100 text-right font-mono font-bold text-rose-800 bg-rose-50/20">${formatVND(emp.tongKhauTru)}</td>
-                        <td class="p-3 border-r border-slate-100 text-right font-mono font-extrabold text-emerald-700 bg-emerald-50/30">${formatVND(emp.thucLanh)}</td>
-                        <td class="p-3 text-center no-print">
-                            <div class="flex items-center justify-center gap-1.5">
-                                <button onclick="editEmployee('${emp.id}')" class="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Chỉnh sửa">
-                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                </button>
-                                <button onclick="deleteEmployee('${emp.id}', '${emp.name}')" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Xóa bỏ">
-                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                </button>
-                                <button onclick="viewPayslip('${emp.id}')" class="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors" title="Phiếu lương">
-                                    <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+                Object.keys(totals).forEach(k => { if (k !== 'totalTrừ') totals[k] += emp[k] || 0; });
+                totals.totalTrừ += emp.tongKhauTru || 0;
+                rows += `<tr class="hover:bg-slate-50 transition-colors">
+                    <td class="p-3 border-r border-slate-100 text-center font-mono font-semibold text-slate-600 bg-slate-50/50 sticky left-0">${emp.month}</td>
+                    <td class="p-3 border-r border-slate-100 font-bold text-slate-950 bg-slate-50/50 sticky left-[100px] min-w-[150px]">${emp.name}</td>
+                    <td class="p-3 border-r border-slate-100 text-center font-mono text-slate-500 font-bold">${emp.ngach}</td>
+                    <td class="p-3 border-r border-slate-100 text-right font-mono font-medium">${formatHeSo(emp.heSoLuong)}</td>
+                    <td class="p-3 border-r border-slate-100 text-right font-mono text-slate-600">${formatHeSo(emp.pcChucVu)}</td>
+                    <td class="p-3 border-r border-slate-100 text-right font-mono text-slate-600">${formatHeSo(emp.pcKhuVuc)}</td>
+                    <td class="p-3 border-r border-slate-100 text-right font-mono text-slate-600">${formatHeSo(emp.pcUuDai)} <span class="text-[9px] text-slate-400">(60%)</span></td>
+                    <td class="p-3 border-r border-slate-100 text-right font-mono text-slate-600">${formatHeSo(emp.pcTrachNhiem)}</td>
+                    <td class="p-3 border-r border-slate-100 text-right font-mono text-slate-600">${formatHeSo(emp.pcThamNien)} <span class="text-[9px] text-slate-400">(${emp.pctnPercent}%)</span></td>
+                    <td class="p-3 border-r border-slate-100 text-right font-mono text-slate-600">${formatHeSo(emp.pcYTe)}</td>
+                    <td class="p-3 border-r border-slate-100 text-right font-mono text-slate-600">${formatHeSo(emp.pcDacBiet)} <span class="text-[9px] text-slate-400">(30%)</span></td>
+                    <td class="p-3 border-r border-slate-100 text-right font-mono font-bold text-indigo-700 bg-indigo-50/30">${formatHeSo(emp.tongHeSo)}</td>
+                    <td class="p-3 border-r border-slate-100 text-right font-mono font-bold text-slate-900 bg-indigo-50/10">${formatVND(emp.tienLuongThang)}</td>
+                    <td class="p-3 border-r border-slate-100 text-right font-mono text-rose-700 bg-rose-50/10">${formatVND(emp.bhxh)}</td>
+                    <td class="p-3 border-r border-slate-100 text-right font-mono text-rose-700 bg-rose-50/10">${formatVND(emp.bhyt)}</td>
+                    <td class="p-3 border-r border-slate-100 text-right font-mono text-rose-700 bg-rose-50/10">${formatVND(emp.bhtn)}</td>
+                    <td class="p-3 border-r border-slate-100 text-right font-mono text-slate-400 bg-slate-50/25">${formatVND(emp.mucDongBaoHiem)}</td>
+                    <td class="p-3 border-r border-slate-100 text-right font-mono font-bold text-rose-800 bg-rose-50/20">${formatVND(emp.tongKhauTru)}</td>
+                    <td class="p-3 border-r border-slate-100 text-right font-mono font-extrabold text-emerald-700 bg-emerald-50/30">${formatVND(emp.thucLanh)}</td>
+                    <td class="p-3 text-center no-print">
+                        <div class="flex items-center justify-center gap-1.5">
+                            <button onclick="editEmployee('${emp.id}')" class="p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors" title="Chỉnh sửa"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg></button>
+                            <button onclick="deleteEmployee('${emp.id}','${emp.name}')" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" title="Xóa"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                            <button onclick="viewPayslip('${emp.id}')" class="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors" title="Phiếu lương"><svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg></button>
+                        </div>
+                    </td>
+                </tr>`;
             });
-            tbody.innerHTML = rowsHtml;
-
-            // Render Footer summary row
-            tfoot.innerHTML = `
-                <tr>
-                    <td colspan="3" class="p-3 text-center border-r border-slate-200 uppercase font-extrabold tracking-wider sticky left-0 bg-slate-100 z-10 shadow-[2px_0_5px_rgba(0,0,0,0.01)]">Cộng Toàn bộ</td>
-                    <td class="p-3 border-r border-slate-200 text-right font-mono text-slate-700">${formatHeSo(totals.hsl)}</td>
-                    <td class="p-3 border-r border-slate-200 text-right font-mono text-slate-700">${formatHeSo(totals.pccv)}</td>
-                    <td class="p-3 border-r border-slate-200 text-right font-mono text-slate-700">${formatHeSo(totals.pckv)}</td>
-                    <td class="p-3 border-r border-slate-200 text-right font-mono text-slate-700">${formatHeSo(totals.pcUuDai)}</td>
-                    <td class="p-3 border-r border-slate-200 text-right font-mono text-slate-700">${formatHeSo(totals.pctnh)}</td>
-                    <td class="p-3 border-r border-slate-200 text-right font-mono text-slate-700">${formatHeSo(totals.pcThamNien)}</td>
-                    <td class="p-3 border-r border-slate-200 text-right font-mono text-slate-700">${formatHeSo(totals.pcyte)}</td>
-                    <td class="p-3 border-r border-slate-200 text-right font-mono text-slate-700">${formatHeSo(totals.pcDacBiet)}</td>
-                    <td class="p-3 border-r border-slate-200 text-right font-mono text-indigo-800 bg-indigo-100/40">${formatHeSo(totals.tongHeSo)}</td>
-                    <td class="p-3 border-r border-slate-200 text-right font-mono text-indigo-900 bg-indigo-100/20">${formatVND(totals.tienLuongThang)}</td>
-                    <td class="p-3 border-r border-slate-200 text-right font-mono text-rose-800 bg-rose-100/20">${formatVND(totals.bhxh)}</td>
-                    <td class="p-3 border-r border-slate-200 text-right font-mono text-rose-800 bg-rose-100/20">${formatVND(totals.bhyt)}</td>
-                    <td class="p-3 border-r border-slate-200 text-right font-mono text-rose-800 bg-rose-100/20">${formatVND(totals.bhtn)}</td>
-                    <td class="p-3 border-r border-slate-200 text-center text-slate-400 bg-slate-50/20">-</td>
-                    <td class="p-3 border-r border-slate-200 text-right font-mono text-rose-900 bg-rose-100/40">${formatVND(totals.totalTrừ)}</td>
-                    <td class="p-3 border-r border-slate-200 text-right font-mono text-emerald-950 bg-emerald-100/50">${formatVND(totals.thucLanh)}</td>
-                    <td class="p-3 no-print"></td>
-                </tr>
-            `;
+            tbody.innerHTML = rows;
+            tfoot.innerHTML = `<tr>
+                <td colspan="3" class="p-3 text-center border-r border-slate-200 uppercase font-extrabold tracking-wider sticky left-0 bg-slate-100 z-10">Cộng Toàn bộ</td>
+                <td class="p-3 border-r border-slate-200 text-right font-mono text-slate-700">${formatHeSo(totals.hsl)}</td>
+                <td class="p-3 border-r border-slate-200 text-right font-mono text-slate-700">${formatHeSo(totals.pccv)}</td>
+                <td class="p-3 border-r border-slate-200 text-right font-mono text-slate-700">${formatHeSo(totals.pckv)}</td>
+                <td class="p-3 border-r border-slate-200 text-right font-mono text-slate-700">${formatHeSo(totals.pcUuDai)}</td>
+                <td class="p-3 border-r border-slate-200 text-right font-mono text-slate-700">${formatHeSo(totals.pctnh)}</td>
+                <td class="p-3 border-r border-slate-200 text-right font-mono text-slate-700">${formatHeSo(totals.pcThamNien)}</td>
+                <td class="p-3 border-r border-slate-200 text-right font-mono text-slate-700">${formatHeSo(totals.pcyte)}</td>
+                <td class="p-3 border-r border-slate-200 text-right font-mono text-slate-700">${formatHeSo(totals.pcDacBiet)}</td>
+                <td class="p-3 border-r border-slate-200 text-right font-mono text-indigo-800 bg-indigo-100/40">${formatHeSo(totals.tongHeSo)}</td>
+                <td class="p-3 border-r border-slate-200 text-right font-mono text-indigo-900 bg-indigo-100/20">${formatVND(totals.tienLuongThang)}</td>
+                <td class="p-3 border-r border-slate-200 text-right font-mono text-rose-800 bg-rose-100/20">${formatVND(totals.bhxh)}</td>
+                <td class="p-3 border-r border-slate-200 text-right font-mono text-rose-800 bg-rose-100/20">${formatVND(totals.bhyt)}</td>
+                <td class="p-3 border-r border-slate-200 text-right font-mono text-rose-800 bg-rose-100/20">${formatVND(totals.bhtn)}</td>
+                <td class="p-3 border-r border-slate-200 text-center text-slate-400 bg-slate-50/20">-</td>
+                <td class="p-3 border-r border-slate-200 text-right font-mono text-rose-900 bg-rose-100/40">${formatVND(totals.totalTrừ)}</td>
+                <td class="p-3 border-r border-slate-200 text-right font-mono text-emerald-950 bg-emerald-100/50">${formatVND(totals.thucLanh)}</td>
+                <td class="p-3 no-print"></td>
+            </tr>`;
         }
 
-        // Render Dashboard Stats
+        // === DASHBOARD ===
         function renderDashboard(data) {
-            let totalGross = 0;
-            let totalNet = 0;
-            let totalDeductions = 0;
-            
-            let sumHsl = 0;
-            let sumPcUudai = 0;
-            let sumPcThamNien = 0;
-            let sumPcDacbiet = 0;
-            let sumPccv = 0;
-            let sumPcKhac = 0;
-            let sumTongHeSo = 0;
-
+            let totalGross=0, totalNet=0, totalDed=0, sumHsl=0, sumPcUu=0, sumPcTn=0, sumPcDb=0, sumPccv=0, sumPcKhac=0, sumTong=0;
             data.forEach(e => {
-                totalGross += e.tienLuongThang;
-                totalNet += e.thucLanh;
-                totalDeductions += e.tongKhauTru;
-
-                sumHsl += e.heSoLuong;
-                sumPcUudai += e.pcUuDai;
-                sumPcThamNien += e.pcThamNien;
-                sumPcDacbiet += e.pcDacBiet;
-                sumPccv += e.pcChucVu;
-                sumPcKhac += (e.pcKhuVuc + e.pcTrachNhiem + e.pcYTe);
-                sumTongHeSo += e.tongHeSo;
+                totalGross += e.tienLuongThang; totalNet += e.thucLanh; totalDed += e.tongKhauTru;
+                sumHsl += e.heSoLuong; sumPcUu += e.pcUuDai; sumPcTn += e.pcThamNien; sumPcDb += e.pcDacBiet;
+                sumPccv += e.pcChucVu; sumPcKhac += (e.pcKhuVuc + e.pcTrachNhiem + e.pcYTe);
+                sumTong += e.tongHeSo;
             });
-
-            // Set KPIs
             document.getElementById('kpi-count').innerText = data.length;
             document.getElementById('kpi-gross').innerText = formatVND(totalGross);
-            document.getElementById('kpi-deduction').innerText = formatVND(totalDeductions);
+            document.getElementById('kpi-deduction').innerText = formatVND(totalDed);
             document.getElementById('kpi-net').innerText = formatVND(totalNet);
 
-            // Chart 1: Bar Charts of Employees
-            const chart1Container = document.getElementById('dashboard-bar-chart');
-            if (data.length === 0) {
-                chart1Container.innerHTML = `<p class="text-xs text-center text-slate-400 py-6">Không có dữ liệu thống kê!</p>`;
-            } else {
+            const chart1 = document.getElementById('dashboard-bar-chart');
+            if (data.length === 0) chart1.innerHTML = '<p class="text-xs text-center text-slate-400 py-6">Không có dữ liệu</p>';
+            else {
                 const maxVal = Math.max(...data.map(e => e.tienLuongThang)) || 1;
-                chart1Container.innerHTML = data.map(e => {
+                chart1.innerHTML = data.map(e => {
                     const grossPct = (e.tienLuongThang / maxVal) * 100;
                     const netPct = (e.thucLanh / maxVal) * 100;
-                    return `
-                        <div class="space-y-1 text-xs">
-                            <div class="flex justify-between font-bold">
-                                <span class="text-slate-800">${e.name} <span class="text-[10px] text-slate-400 font-normal">(${e.month})</span></span>
-                                <span class="text-slate-500 font-mono">
-                                    <span class="text-indigo-600 font-semibold">${formatVND(e.tienLuongThang)}</span>
-                                    <span class="text-slate-300">/</span>
-                                    <span class="text-emerald-600 font-extrabold">${formatVND(e.thucLanh)}</span>
-                                </span>
-                            </div>
-                            <div class="bg-slate-50 p-2 rounded-xl space-y-1.5 border border-slate-100">
-                                <!-- Gross bar -->
-                                <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                                    <div class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width: ${grossPct}%"></div>
-                                </div>
-                                <!-- Net bar -->
-                                <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden">
-                                    <div class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: ${netPct}%"></div>
-                                </div>
-                            </div>
+                    return `<div class="space-y-1 text-xs">
+                        <div class="flex justify-between font-bold"><span class="text-slate-800">${e.name} <span class="text-[10px] text-slate-400 font-normal">(${e.month})</span></span>
+                        <span class="text-slate-500 font-mono"><span class="text-indigo-600 font-semibold">${formatVND(e.tienLuongThang)}</span> <span class="text-slate-300">/</span> <span class="text-emerald-600 font-extrabold">${formatVND(e.thucLanh)}</span></span></div>
+                        <div class="bg-slate-50 p-2 rounded-xl space-y-1.5 border border-slate-100">
+                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden"><div class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width: ${grossPct}%"></div></div>
+                            <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden"><div class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: ${netPct}%"></div></div>
                         </div>
-                    `;
+                    </div>`;
                 }).join('');
             }
 
-            // Chart 2: Decomposition percents
-            const chart2Container = document.getElementById('dashboard-composition-chart');
-            if (data.length === 0) {
-                chart2Container.innerHTML = `<p class="text-xs text-center text-slate-400 py-6">Không có dữ liệu thống kê!</p>`;
-            } else {
+            const chart2 = document.getElementById('dashboard-composition-chart');
+            if (data.length === 0) chart2.innerHTML = '<p class="text-xs text-center text-slate-400 py-6">Không có dữ liệu</p>';
+            else {
                 const parts = [
                     { name: 'Hệ Số Lương Cơ Bản', val: sumHsl, color: 'bg-indigo-600', text: 'text-indigo-600' },
-                    { name: 'Hệ số Phụ cấp Ưu đãi', val: sumPcUudai, color: 'bg-teal-500', text: 'text-teal-500' },
-                    { name: 'Hệ số Phụ cấp Thâm niên', val: sumPcThamNien, color: 'bg-amber-500', text: 'text-amber-500' },
-                    { name: 'Hệ số Phụ cấp Đặc biệt', val: sumPcDacbiet, color: 'bg-cyan-500', text: 'text-cyan-500' },
-                    { name: 'Hệ số Phụ cấp Chức vụ', val: sumPccv, color: 'bg-purple-600', text: 'text-purple-600' },
-                    { name: 'Hệ số Phụ cấp Khác (Khu vực, Trách nhiệm, Y tế)', val: sumPcKhac, color: 'bg-rose-500', text: 'text-rose-500' }
+                    { name: 'PC Ưu đãi (60%)', val: sumPcUu, color: 'bg-teal-500', text: 'text-teal-500' },
+                    { name: 'PC Thâm niên', val: sumPcTn, color: 'bg-amber-500', text: 'text-amber-500' },
+                    { name: 'PC Đặc biệt (30%)', val: sumPcDb, color: 'bg-cyan-500', text: 'text-cyan-500' },
+                    { name: 'PC Chức vụ', val: sumPccv, color: 'bg-purple-600', text: 'text-purple-600' },
+                    { name: 'PC Khác (KV, TN, Y tế)', val: sumPcKhac, color: 'bg-rose-500', text: 'text-rose-500' }
                 ];
-
-                const totalSum = sumTongHeSo || 1;
-                chart2Container.innerHTML = parts.map(p => {
+                const totalSum = sumTong || 1;
+                chart2.innerHTML = parts.map(p => {
                     const pct = (p.val / totalSum) * 100;
-                    return `
-                        <div class="space-y-1 text-xs">
-                            <div class="flex justify-between font-bold text-slate-700">
-                                <span>${p.name}</span>
-                                <span class="${p.text} font-mono">${formatHeSo(p.val)} (${pct.toFixed(1)}%)</span>
-                            </div>
-                            <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                                <div class="h-full ${p.color} rounded-full transition-all duration-500" style="width: ${pct}%"></div>
-                            </div>
-                        </div>
-                    `;
+                    return `<div class="space-y-1 text-xs"><div class="flex justify-between font-bold text-slate-700"><span>${p.name}</span><span class="${p.text} font-mono">${formatHeSo(p.val)} (${pct.toFixed(1)}%)</span></div><div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden"><div class="h-full ${p.color} rounded-full transition-all duration-500" style="width: ${pct}%"></div></div></div>`;
                 }).join('');
             }
         }
 
-        // Render Payslip individual view
+        // === PHIẾU LƯƠNG CÓ CHỈNH SỬA ===
         function renderPayslipView() {
-            const listContainer = document.getElementById('payslip-selector-list');
-            const layoutContainer = document.getElementById('payslip-layout');
-            const calculated = getCalculatedData();
+            const list = document.getElementById('payslip-selector-list');
+            const layout = document.getElementById('payslip-layout');
+            const data = getCalculatedData();
+            if (data.length === 0) { list.innerHTML = '<p class="text-xs text-center text-slate-400 py-6">Không có nhân viên!</p>'; layout.innerHTML = '<p class="text-xs text-center text-slate-400 py-6">Thêm thông tin nhân sự để xem phiếu lương.</p>'; return; }
+            if (!data.some(e => e.id === selectedPayslipId)) selectedPayslipId = data[0].id;
 
-            if (calculated.length === 0) {
-                listContainer.innerHTML = `<p class="text-xs text-center text-slate-400 py-6">Không có nhân viên!</p>`;
-                layoutContainer.innerHTML = `<p class="text-xs text-center text-slate-400 py-6">Thêm thông tin nhân sự để xem phiếu lương.</p>`;
-                return;
-            }
+            list.innerHTML = data.map(emp => `<button onclick="selectPayslip('${emp.id}')" class="w-full text-left p-3.5 rounded-xl border text-xs transition-all ${emp.id === selectedPayslipId ? 'border-indigo-500 bg-indigo-50/50 shadow-sm font-bold' : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'}">
+                <div class="font-bold text-slate-900 mb-1">${emp.name}</div><div class="flex justify-between text-[10px] text-slate-400 font-mono"><span>Ngạch: ${emp.ngach}</span><span>Tháng: ${emp.month}</span></div>
+            </button>`).join('');
 
-            // Ensure valid selection
-            if (!calculated.some(e => e.id === selectedPayslipId)) {
-                selectedPayslipId = calculated[0].id;
-            }
+            const emp = data.find(e => e.id === selectedPayslipId);
+            if (!emp) return;
 
-            // Render selector sidebar
-            listContainer.innerHTML = calculated.map(emp => {
-                const active = emp.id === selectedPayslipId;
-                return `
-                    <button
-                        onclick="selectPayslip('${emp.id}')"
-                        class="w-full text-left p-3.5 rounded-xl border text-xs transition-all ${
-                            active 
-                                ? 'border-indigo-500 bg-indigo-50/50 shadow-sm font-bold' 
-                                : 'border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                        }"
-                    >
-                        <div class="font-bold text-slate-900 mb-1">${emp.name}</div>
-                        <div class="flex justify-between text-[10px] text-slate-400 font-mono">
-                            <span>Ngạch: ${emp.ngach}</span>
-                            <span>Tháng: ${emp.month}</span>
-                        </div>
-                    </button>
-                `;
-            }).join('');
+            const editForm = `
+                <div class="payslip-edit grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 no-print">
+                    <div><label class="block text-[10px] font-semibold text-slate-500">HSL</label><input type="number" id="edit-hsl" value="${emp.heSoLuong}" step="0.01" /></div>
+                    <div><label class="block text-[10px] font-semibold text-slate-500">PC Chức vụ</label><input type="number" id="edit-pccv" value="${emp.pcChucVu}" step="0.01" /></div>
+                    <div><label class="block text-[10px] font-semibold text-slate-500">PC Khu vực</label><input type="number" id="edit-pckv" value="${emp.pcKhuVuc}" step="0.01" /></div>
+                    <div><label class="block text-[10px] font-semibold text-slate-500">PC Trách nhiệm</label><input type="number" id="edit-pctnh" value="${emp.pcTrachNhiem}" step="0.01" /></div>
+                    <div><label class="block text-[10px] font-semibold text-slate-500">Thâm niên %</label><input type="number" id="edit-pctn" value="${emp.pctnPercent}" step="0.1" min="0" max="100" /></div>
+                    <div><label class="block text-[10px] font-semibold text-slate-500">PC Y tế</label><input type="number" id="edit-pcyte" value="${emp.pcYTe}" step="0.0001" /></div>
+                    <div><label class="block text-[10px] font-semibold text-slate-500">Đặc biệt %</label><input type="number" id="edit-dacbiet" value="${emp.dacBietPercent}" step="0.1" min="0" max="100" /></div>
+                    <div><label class="block text-[10px] font-semibold text-slate-500">Mã ngạch</label><input type="text" id="edit-ngach" value="${emp.ngach}" class="uppercase" /></div>
+                    <div class="col-span-4 flex justify-end gap-2 pt-2">
+                        <button onclick="applyPayslipEdit('${emp.id}')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs px-4 py-2 rounded-xl shadow-md transition-all">Áp dụng thay đổi</button>
+                        <button onclick="resetPayslipEdit('${emp.id}')" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs px-4 py-2 rounded-xl transition-all">Khôi phục</button>
+                    </div>
+                </div>
+            `;
 
-            // Get selected employee object
-            const emp = calculated.find(e => e.id === selectedPayslipId);
-            
-            // Build printable layout markup
-            layoutContainer.innerHTML = `
-                <!-- Quốc hiệu -->
+            const payslipContent = `
                 <div class="text-center space-y-1 pb-4 border-b-2 border-slate-900">
                     <p class="text-xs uppercase font-extrabold text-slate-800 tracking-wider">Cộng hòa Xã hội Chủ nghĩa Việt Nam</p>
                     <p class="text-xs font-bold text-slate-700">Độc lập - Tự do - Hạnh phúc</p>
@@ -1216,367 +671,274 @@
                     <h2 class="text-base font-black text-slate-950 uppercase pt-2 tracking-wide">Phiếu Thanh Toán Tiền Lương Tháng</h2>
                     <p class="text-xs text-slate-500 font-mono font-bold">Kỳ thanh toán: ${emp.month}</p>
                 </div>
-
-                <!-- Profile -->
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-2">
-                    <div>
-                        <p class="text-slate-400 font-medium">Họ và tên cán bộ:</p>
-                        <p class="font-extrabold text-slate-900 text-sm mt-0.5">${emp.name}</p>
-                    </div>
-                    <div>
-                        <p class="text-slate-400 font-medium">Ngạch viên chức/Mã ngạch:</p>
-                        <p class="font-mono font-extrabold text-indigo-700 text-sm mt-0.5">${emp.ngach}</p>
-                    </div>
-                    <div>
-                        <p class="text-slate-400 font-medium">Hệ số lương chính (HSL):</p>
-                        <p class="font-mono font-bold text-slate-900 text-sm mt-0.5">${formatHeSo(emp.heSoLuong)}</p>
-                    </div>
-                    <div>
-                        <p class="text-slate-400 font-medium">Mức lương cơ sở áp dụng:</p>
-                        <p class="font-mono font-bold text-emerald-600 text-sm mt-0.5">${formatVND(baseSalary)}</p>
-                    </div>
+                    <div><p class="text-slate-400 font-medium">Họ và tên cán bộ:</p><p class="font-extrabold text-slate-900 text-sm mt-0.5">${emp.name}</p></div>
+                    <div><p class="text-slate-400 font-medium">Ngạch viên chức/Mã ngạch:</p><p class="font-mono font-extrabold text-indigo-700 text-sm mt-0.5">${emp.ngach}</p></div>
+                    <div><p class="text-slate-400 font-medium">Hệ số lương chính (HSL):</p><p class="font-mono font-bold text-slate-900 text-sm mt-0.5">${formatHeSo(emp.heSoLuong)}</p></div>
+                    <div><p class="text-slate-400 font-medium">Mức lương cơ sở áp dụng:</p><p class="font-mono font-bold text-emerald-600 text-sm mt-0.5">${formatVND(baseSalary)}</p></div>
                 </div>
-
-                <!-- Structured breakdown table -->
                 <div class="border border-slate-200 rounded-xl overflow-hidden text-xs">
-                    <div class="grid grid-cols-3 bg-slate-950 text-white font-bold p-3 uppercase tracking-wider text-[9px]">
-                        <div class="col-span-2">Cơ cấu lương & Phụ cấp</div>
-                        <div class="text-right">Giá trị thực lĩnh (đ)</div>
-                    </div>
-
+                    <div class="grid grid-cols-3 bg-slate-950 text-white font-bold p-3 uppercase tracking-wider text-[9px]"><div class="col-span-2">Cơ cấu lương & Phụ cấp</div><div class="text-right">Giá trị thực lĩnh (đ)</div></div>
                     <div class="divide-y divide-slate-100">
-                        <!-- Lương chính -->
-                        <div class="grid grid-cols-3 p-3 items-center">
-                            <div class="col-span-2">
-                                <p class="font-bold text-slate-800">Lương cơ bản theo ngạch bậc</p>
-                                <p class="text-slate-400 text-[10px] font-mono">Công thức: Hệ số ${formatHeSo(emp.heSoLuong)} * ${formatVND(baseSalary)}</p>
-                            </div>
-                            <div class="text-right font-mono font-bold text-slate-900">
-                                ${formatVND(emp.heSoLuong * baseSalary)}
-                            </div>
-                        </div>
-
-                        <!-- PC Chức vụ -->
-                        ${emp.pcChucVu > 0 ? `
-                        <div class="grid grid-cols-3 p-3 items-center">
-                            <div class="col-span-2">
-                                <p class="font-bold text-slate-800">Phụ cấp chức vụ lãnh đạo</p>
-                                <p class="text-slate-400 text-[10px] font-mono">Hệ số chức vụ: ${formatHeSo(emp.pcChucVu)}</p>
-                            </div>
-                            <div class="text-right font-mono text-slate-900">
-                                ${formatVND(emp.pcChucVu * baseSalary)}
-                            </div>
-                        </div>
-                        ` : ''}
-
-                        <!-- PC Ưu đãi -->
-                        ${emp.pcUuDai > 0 ? `
-                        <div class="grid grid-cols-3 p-3 items-center">
-                            <div class="col-span-2">
-                                <p class="font-bold text-slate-800">Phụ cấp ưu đãi theo ngành (${emp.uuDaiPercent}%)</p>
-                                <p class="text-slate-400 text-[10px] font-mono">Công thức: ${emp.uuDaiPercent}% * Hệ số lương ${formatHeSo(emp.heSoLuong)}</p>
-                            </div>
-                            <div class="text-right font-mono text-slate-900">
-                                ${formatVND(emp.pcUuDai * baseSalary)}
-                            </div>
-                        </div>
-                        ` : ''}
-
-                        <!-- PC Thâm niên -->
-                        ${emp.pcThamNien > 0 ? `
-                        <div class="grid grid-cols-3 p-3 items-center">
-                            <div class="col-span-2">
-                                <p class="font-bold text-slate-800">Phụ cấp thâm niên nghề (${emp.pctnPercent}%)</p>
-                                <p class="text-slate-400 text-[10px] font-mono">Công thức: ${emp.pctnPercent}% * (HSL ${formatHeSo(emp.heSoLuong)} + PC Chức vụ ${formatHeSo(emp.pcChucVu)})</p>
-                            </div>
-                            <div class="text-right font-mono text-slate-900">
-                                ${formatVND(emp.pcThamNien * baseSalary)}
-                            </div>
-                        </div>
-                        ` : ''}
-
-                        <!-- PC Đặc biệt -->
-                        ${emp.pcDacBiet > 0 ? `
-                        <div class="grid grid-cols-3 p-3 items-center">
-                            <div class="col-span-2">
-                                <p class="font-bold text-slate-800">Phụ cấp đặc biệt (${emp.dacBietPercent}%)</p>
-                                <p class="text-slate-400 text-[10px] font-mono">Công thức: ${emp.dacBietPercent}% * Hệ số lương ${formatHeSo(emp.heSoLuong)}</p>
-                            </div>
-                            <div class="text-right font-mono text-slate-900">
-                                ${formatVND(emp.pcDacBiet * baseSalary)}
-                            </div>
-                        </div>
-                        ` : ''}
-
-                        <!-- Phụ cấp khác -->
-                        ${(emp.pcKhuVuc > 0 || emp.pcTrachNhiem > 0 || emp.pcYTe > 0) ? `
-                        <div class="grid grid-cols-3 p-3 items-center bg-slate-50/50">
-                            <div class="col-span-2">
-                                <p class="font-bold text-slate-800">Cộng phụ cấp đặc thù khác (Khu vực, Trách nhiệm, Y tế)</p>
-                                <p class="text-slate-400 text-[10px] font-mono">Tổng hệ số đặc thù cộng thêm: ${formatHeSo(emp.pcKhuVuc + emp.pcTrachNhiem + emp.pcYTe)}</p>
-                            </div>
-                            <div class="text-right font-mono text-slate-900">
-                                ${formatVND((emp.pcKhuVuc + emp.pcTrachNhiem + emp.pcYTe) * baseSalary)}
-                            </div>
-                        </div>
-                        ` : ''}
-
-                        <!-- Tổng tiền phát sinh -->
-                        <div class="grid grid-cols-3 p-3 bg-indigo-50/50 text-indigo-950 font-bold items-center">
-                            <div class="col-span-2">
-                                <p class="text-xs">TỔNG LƯƠNG GỘP PHÁT SINH TRONG THÁNG</p>
-                                <p class="text-[10px] text-indigo-700 font-normal">Cơ số tổng hệ số quy đổi: ${formatHeSo(emp.tongHeSo)}</p>
-                            </div>
-                            <div class="text-right font-mono text-xs font-black">
-                                ${formatVND(emp.tienLuongThang)}
-                            </div>
-                        </div>
-
-                        <!-- Trừ bảo hiểm -->
-                        <div class="grid grid-cols-3 p-3 bg-rose-50/30 text-rose-950 items-center">
-                            <div class="col-span-2">
-                                <p class="font-bold">Các khoản trừ vào lương của người lao động (10.5%)</p>
-                                <p class="text-[9px] text-rose-600/85">Gốc đóng BH: ${formatVND(emp.mucDongBaoHiem)} | BHXH (8%): ${formatVND(emp.bhxh)} | BHYT (1.5%): ${formatVND(emp.bhyt)} | BHTN (1%): ${formatVND(emp.bhtn)}</p>
-                            </div>
-                            <div class="text-right font-mono font-bold text-rose-800">
-                                - ${formatVND(emp.tongKhauTru)}
-                            </div>
-                        </div>
-
-                        <!-- Thực nhận chuyển khoản -->
-                        <div class="grid grid-cols-3 p-4 bg-emerald-50 text-emerald-950 font-black text-sm items-center">
-                            <div class="col-span-2 uppercase text-xs">Thực nhận thực tế chuyển khoản</div>
-                            <div class="text-right font-mono text-emerald-700 text-sm">
-                                ${formatVND(emp.thucLanh)}
-                            </div>
-                        </div>
+                        <div class="grid grid-cols-3 p-3 items-center"><div class="col-span-2"><p class="font-bold text-slate-800">Lương cơ bản theo ngạch bậc</p><p class="text-slate-400 text-[10px] font-mono">Công thức: Hệ số ${formatHeSo(emp.heSoLuong)} * ${formatVND(baseSalary)}</p></div><div class="text-right font-mono font-bold text-slate-900">${formatVND(emp.heSoLuong * baseSalary)}</div></div>
+                        ${emp.pcChucVu > 0 ? `<div class="grid grid-cols-3 p-3 items-center"><div class="col-span-2"><p class="font-bold text-slate-800">Phụ cấp chức vụ lãnh đạo</p><p class="text-slate-400 text-[10px] font-mono">Hệ số chức vụ: ${formatHeSo(emp.pcChucVu)}</p></div><div class="text-right font-mono text-slate-900">${formatVND(emp.pcChucVu * baseSalary)}</div></div>` : ''}
+                        <div class="grid grid-cols-3 p-3 items-center"><div class="col-span-2"><p class="font-bold text-slate-800">Phụ cấp ưu đãi (60%)</p><p class="text-slate-400 text-[10px] font-mono">Công thức: 60% * (HSL ${formatHeSo(emp.heSoLuong)} + PC CV ${formatHeSo(emp.pcChucVu)})</p></div><div class="text-right font-mono text-slate-900">${formatVND(emp.pcUuDai * baseSalary)}</div></div>
+                        ${emp.pcThamNien > 0 ? `<div class="grid grid-cols-3 p-3 items-center"><div class="col-span-2"><p class="font-bold text-slate-800">Phụ cấp thâm niên nghề (${emp.pctnPercent}%)</p><p class="text-slate-400 text-[10px] font-mono">Công thức: ${emp.pctnPercent}% * (HSL ${formatHeSo(emp.heSoLuong)} + PC CV ${formatHeSo(emp.pcChucVu)})</p></div><div class="text-right font-mono text-slate-900">${formatVND(emp.pcThamNien * baseSalary)}</div></div>` : ''}
+                        <div class="grid grid-cols-3 p-3 items-center"><div class="col-span-2"><p class="font-bold text-slate-800">Phụ cấp đặc biệt (30%)</p><p class="text-slate-400 text-[10px] font-mono">Công thức: 30% * (HSL ${formatHeSo(emp.heSoLuong)} + PC CV ${formatHeSo(emp.pcChucVu)})</p></div><div class="text-right font-mono text-slate-900">${formatVND(emp.pcDacBiet * baseSalary)}</div></div>
+                        ${(emp.pcKhuVuc > 0 || emp.pcTrachNhiem > 0 || emp.pcYTe > 0) ? `<div class="grid grid-cols-3 p-3 items-center bg-slate-50/50"><div class="col-span-2"><p class="font-bold text-slate-800">Cộng phụ cấp đặc thù khác (Khu vực, Trách nhiệm, Y tế)</p><p class="text-slate-400 text-[10px] font-mono">Tổng hệ số: ${formatHeSo(emp.pcKhuVuc + emp.pcTrachNhiem + emp.pcYTe)}</p></div><div class="text-right font-mono text-slate-900">${formatVND((emp.pcKhuVuc + emp.pcTrachNhiem + emp.pcYTe) * baseSalary)}</div></div>` : ''}
+                        <div class="grid grid-cols-3 p-3 bg-indigo-50/50 text-indigo-950 font-bold items-center"><div class="col-span-2"><p class="text-xs">TỔNG LƯƠNG GỘP PHÁT SINH TRONG THÁNG</p><p class="text-[10px] text-indigo-700 font-normal">Cơ số tổng hệ số: ${formatHeSo(emp.tongHeSo)}</p></div><div class="text-right font-mono text-xs font-black">${formatVND(emp.tienLuongThang)}</div></div>
+                        <div class="grid grid-cols-3 p-3 bg-rose-50/30 text-rose-950 items-center"><div class="col-span-2"><p class="font-bold">Các khoản trừ vào lương của người lao động (10.5%)</p><p class="text-[9px] text-rose-600/85">Gốc đóng BH: ${formatVND(emp.mucDongBaoHiem)} | BHXH (8%): ${formatVND(emp.bhxh)} | BHYT (1.5%): ${formatVND(emp.bhyt)} | BHTN (1%): ${formatVND(emp.bhtn)}</p></div><div class="text-right font-mono font-bold text-rose-800">- ${formatVND(emp.tongKhauTru)}</div></div>
+                        <div class="grid grid-cols-3 p-4 bg-emerald-50 text-emerald-950 font-black text-sm items-center"><div class="col-span-2 uppercase text-xs">Thực nhận thực tế chuyển khoản</div><div class="text-right font-mono text-emerald-700 text-sm">${formatVND(emp.thucLanh)}</div></div>
                     </div>
                 </div>
-
-                <!-- Chữ ký -->
                 <div class="grid grid-cols-2 text-center text-xs pt-8 pb-4 gap-4">
-                    <div>
-                        <p class="font-bold uppercase text-slate-800">Người lập biểu</p>
-                        <p class="text-slate-400 mt-0.5 text-[10px]">(Ký, ghi rõ họ tên)</p>
-                        <div class="h-12"></div>
-                    </div>
-                    <div>
-                        <p class="font-bold uppercase text-slate-800">Thủ trưởng đơn vị</p>
-                        <p class="text-slate-400 mt-0.5 text-[10px]">(Ký tên, đóng dấu)</p>
-                        <div class="h-12"></div>
-                    </div>
+                    <div><p class="font-bold uppercase text-slate-800">Người lập biểu</p><p class="text-slate-400 mt-0.5 text-[10px]">(Ký, ghi rõ họ tên)</p><div class="h-12"></div></div>
+                    <div><p class="font-bold uppercase text-slate-800">Thủ trưởng đơn vị</p><p class="text-slate-400 mt-0.5 text-[10px]">(Ký tên, đóng dấu)</p><div class="h-12"></div></div>
                 </div>
             `;
+
+            layout.innerHTML = editForm + payslipContent;
         }
 
-        // Action when select payslip
-        function selectPayslip(id) {
-            selectedPayslipId = id;
-            renderPayslipView();
+        // Áp dụng thay đổi từ form chỉnh sửa
+        function applyPayslipEdit(id) {
+            const emp = employees.find(e => e.id === id);
+            if (!emp) return;
+
+            const newHsl = parseFloat(document.getElementById('edit-hsl').value);
+            const newPccv = parseFloat(document.getElementById('edit-pccv').value);
+            const newPckv = parseFloat(document.getElementById('edit-pckv').value);
+            const newPctnh = parseFloat(document.getElementById('edit-pctnh').value);
+            const newPctn = parseFloat(document.getElementById('edit-pctn').value);
+            const newPcyte = parseFloat(document.getElementById('edit-pcyte').value);
+            const newDacbiet = parseFloat(document.getElementById('edit-dacbiet').value);
+            const newNgach = document.getElementById('edit-ngach').value.trim().toUpperCase();
+
+            if (isNaN(newHsl) || isNaN(newPccv) || isNaN(newPckv) || isNaN(newPctnh) || isNaN(newPctn) || isNaN(newPcyte) || isNaN(newDacbiet) || !newNgach) {
+                showToast('Vui lòng nhập đúng định dạng số và mã ngạch!', 'error');
+                return;
+            }
+
+            emp.heSoLuong = newHsl;
+            emp.pcChucVu = newPccv;
+            emp.pcKhuVuc = newPckv;
+            emp.pcTrachNhiem = newPctnh;
+            emp.pctnPercent = newPctn;
+            emp.pcYTe = newPcyte;
+            emp.dacBietPercent = newDacbiet;
+            emp.ngach = newNgach;
+
+            saveToLocalStorage();
+            showToast('Đã cập nhật thông số lương và lưu vào bộ nhớ!');
+            renderAll();
         }
 
-        function viewPayslip(id) {
-            selectedPayslipId = id;
-            switchTab('payslip');
+        function resetPayslipEdit(id) {
+            // Không có bản gốc riêng, chỉ có thể thông báo.
+            showToast('Khôi phục dữ liệu gốc: Hãy nhập lại các giá trị ban đầu hoặc tải lại trang.', 'error');
         }
 
-        // Open modals
+        // ================================================================
+        //  CHUYỂN TAB
+        // ================================================================
+        function switchTab(tab) {
+            currentTab = tab;
+            document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
+            document.getElementById(`view-${tab}`).classList.remove('hidden');
+            document.querySelectorAll('.tab-btn').forEach(b => b.className = 'tab-btn flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all text-slate-600 hover:text-slate-900 flex-1 md:flex-none');
+            document.getElementById(`tab-btn-${tab}`).className = 'tab-btn flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-bold transition-all bg-white text-indigo-600 shadow-sm flex-1 md:flex-none';
+            renderAll();
+        }
+        function triggerFilter() { searchTerm = document.getElementById('search-input').value; filterMonth = document.getElementById('filter-month').value; renderAll(); }
+        function selectPayslip(id) { selectedPayslipId = id; renderPayslipView(); }
+        function viewPayslip(id) { selectedPayslipId = id; switchTab('payslip'); }
+
+        // ================================================================
+        //  THÊM / SỬA / XÓA
+        // ================================================================
         function openAddModal() {
             document.getElementById('modal-title').innerText = 'Thêm bản ghi tính lương mới';
             document.getElementById('form-editing-id').value = '';
             document.getElementById('employee-form').reset();
-            
-            // Set current month default
-            const d = new Date();
-            const currMonthStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-            document.getElementById('form-month').value = currMonthStr;
-
+            const d = new Date(); document.getElementById('form-month').value = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
             document.getElementById('employee-modal').classList.remove('hidden');
         }
-
         function editEmployee(id) {
             const emp = employees.find(e => e.id === id);
             if (!emp) return;
-
-            document.getElementById('modal-title').innerText = `Chỉnh sửa dữ liệu lương: ${emp.name}`;
+            document.getElementById('modal-title').innerText = `Chỉnh sửa: ${emp.name}`;
             document.getElementById('form-editing-id').value = emp.id;
-
             document.getElementById('form-month').value = emp.month;
             document.getElementById('form-name').value = emp.name;
             document.getElementById('form-ngach').value = emp.ngach;
             document.getElementById('form-hsl').value = emp.heSoLuong;
             document.getElementById('form-pccv').value = emp.pcChucVu;
             document.getElementById('form-pckv').value = emp.pcKhuVuc;
-            document.getElementById('form-uudai-percent').value = emp.uuDaiPercent;
             document.getElementById('form-pctnh').value = emp.pcTrachNhiem;
             document.getElementById('form-pctn-percent').value = emp.pctnPercent;
             document.getElementById('form-pcyte').value = emp.pcYTe;
             document.getElementById('form-dacbiet-percent').value = emp.dacBietPercent;
-
             document.getElementById('employee-modal').classList.remove('hidden');
         }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.add('hidden');
-        }
-
-        function handleFormSubmit(e) {
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+        document.getElementById('employee-form').addEventListener('submit', function(e) {
             e.preventDefault();
-
-            const editingId = document.getElementById('form-editing-id').value;
-            const nameVal = document.getElementById('form-name').value.trim();
-            const ngachVal = document.getElementById('form-ngach').value.trim().toUpperCase();
-
-            if (!nameVal || !ngachVal) {
-                showToast('Họ tên và mã ngạch là thông tin bắt buộc!', 'error');
-                return;
-            }
-
+            const id = document.getElementById('form-editing-id').value;
             const payload = {
-                id: editingId || Date.now().toString(),
+                id: id || Date.now().toString(),
                 month: document.getElementById('form-month').value,
-                name: nameVal,
-                ngach: ngachVal,
+                name: document.getElementById('form-name').value.trim(),
+                ngach: document.getElementById('form-ngach').value.trim().toUpperCase(),
                 heSoLuong: parseFloat(document.getElementById('form-hsl').value) || 0,
                 pcChucVu: parseFloat(document.getElementById('form-pccv').value) || 0,
                 pcKhuVuc: parseFloat(document.getElementById('form-pckv').value) || 0,
-                uuDaiPercent: parseFloat(document.getElementById('form-uudai-percent').value) || 0,
                 pcTrachNhiem: parseFloat(document.getElementById('form-pctnh').value) || 0,
                 pctnPercent: parseFloat(document.getElementById('form-pctn-percent').value) || 0,
                 pcYTe: parseFloat(document.getElementById('form-pcyte').value) || 0,
-                dacBietPercent: parseFloat(document.getElementById('form-dacbiet-percent').value) || 0
+                dacBietPercent: parseFloat(document.getElementById('form-dacbiet-percent').value) || 30
             };
-
-            if (editingId) {
-                // Update
-                employees = employees.map(emp => emp.id === editingId ? payload : emp);
-                showToast('Đã cập nhật hồ sơ tính lương thành công!');
-            } else {
-                // Insert
-                employees.unshift(payload);
-                showToast('Đã thêm hồ sơ tính lương mới thành công!');
-            }
-
+            if (!payload.name || !payload.ngach) { showToast('Họ tên và mã ngạch là bắt buộc!', 'error'); return; }
+            if (id) { employees = employees.map(emp => emp.id === id ? payload : emp); showToast('Đã cập nhật!'); }
+            else { employees.unshift(payload); showToast('Đã thêm mới!'); }
+            saveToLocalStorage();
             closeModal('employee-modal');
             renderAll();
-        }
-
-        // Delete confirmation custom modal
+        });
         function deleteEmployee(id, name) {
-            showConfirm(
-                'Xác nhận xoá bản ghi',
-                `Bạn có chắc chắn muốn xóa vĩnh viễn dòng tính toán lương của nhân viên "${name}" khỏi cơ sở dữ liệu?`,
-                () => {
-                    employees = employees.filter(e => e.id !== id);
-                    showToast('Đã xóa bỏ dữ liệu lương thành công!');
-                    renderAll();
+            showConfirm('Xác nhận xoá', `Xóa vĩnh viễn dòng tính lương của "${name}"?`, () => {
+                employees = employees.filter(e => e.id !== id);
+                saveToLocalStorage();
+                showToast('Đã xóa!');
+                renderAll();
+            });
+        }
+
+        // ================================================================
+        //  IMPORT / EXPORT JSON
+        // ================================================================
+        function exportJSON() {
+            const data = JSON.stringify(employees, null, 2);
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `bang_luong_T7_2026.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('Xuất JSON thành công!');
+        }
+
+        function importJSON(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!Array.isArray(data)) throw new Error('Dữ liệu không hợp lệ');
+                    if (data.length > 0 && (!data[0].id || !data[0].name)) {
+                        showToast('Dữ liệu JSON không đúng cấu trúc!', 'error');
+                        return;
+                    }
+                    showConfirm('Nhập dữ liệu JSON', `Bạn có muốn thay thế toàn bộ dữ liệu hiện tại bằng ${data.length} bản ghi mới không?`, () => {
+                        employees = data;
+                        saveToLocalStorage();
+                        showToast(`Đã nhập ${data.length} bản ghi!`);
+                        renderAll();
+                    });
+                } catch (err) {
+                    showToast('Lỗi đọc file JSON: ' + err.message, 'error');
                 }
-            );
+            };
+            reader.readAsText(file);
+            event.target.value = '';
         }
 
-        // CSV parsing and import
-        function openImportModal() {
-            document.getElementById('csv-text-input').value = '';
-            document.getElementById('import-modal').classList.remove('hidden');
-        }
-
+        // ================================================================
+        //  IMPORT / EXPORT CSV
+        // ================================================================
+        function openImportModal() { document.getElementById('csv-text-input').value = ''; document.getElementById('import-modal').classList.remove('hidden'); }
         function processCsvImport() {
-            const rawText = document.getElementById('csv-text-input').value.trim();
-            if (!rawText) {
-                showToast('Nội dung nhập trống!', 'error');
-                return;
-            }
-
+            const raw = document.getElementById('csv-text-input').value.trim();
+            if (!raw) { showToast('Nội dung trống!', 'error'); return; }
             try {
-                const lines = rawText.split('\n').map(l => l.trim()).filter(l => l);
-                if (lines.length < 2) {
-                    showToast('Định dạng CSV không hợp lệ (Cần tiêu đề và tối thiểu 1 dòng dữ liệu)', 'error');
-                    return;
-                }
-
-                let newEmployees = [];
-                // Start from 1, skip column header
+                const lines = raw.split('\n').map(l => l.trim()).filter(l => l);
+                if (lines.length < 2) { showToast('Cần tiêu đề + ít nhất 1 dòng dữ liệu', 'error'); return; }
+                let newData = [];
                 for (let i = 1; i < lines.length; i++) {
-                    const columns = lines[i].split(',').map(col => col.replace(/^"|"$/g, '').trim());
-                    if (columns.length < 5) continue; // safety check
-
-                    newEmployees.push({
-                        id: `imported-${Date.now()}-${i}`,
-                        month: columns[0] || '2026-06',
-                        name: columns[1] || 'Nhân viên mới',
-                        ngach: columns[2] || 'Chưa phân loại',
-                        heSoLuong: parseFloat(columns[3]) || 2.34,
-                        pcChucVu: parseFloat(columns[4]) || 0,
-                        pcKhuVuc: parseFloat(columns[5]) || 0,
-                        uuDaiPercent: parseFloat(columns[6]) || 0,
-                        pcTrachNhiem: parseFloat(columns[7]) || 0,
-                        pctnPercent: parseFloat(columns[8]) || 0,
-                        pcYTe: parseFloat(columns[9]) || 0,
-                        dacBietPercent: parseFloat(columns[10]) || 0
+                    const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
+                    if (cols.length < 6) continue;
+                    newData.push({
+                        id: `import-${Date.now()}-${i}`,
+                        month: cols[0] || '2026-07',
+                        name: cols[1] || 'Nhân viên mới',
+                        ngach: cols[2] || 'Chưa phân loại',
+                        heSoLuong: parseFloat(cols[3]) || 2.34,
+                        pcChucVu: parseFloat(cols[4]) || 0,
+                        pcKhuVuc: parseFloat(cols[5]) || 0,
+                        pcTrachNhiem: parseFloat(cols[6]) || 0,
+                        pctnPercent: parseFloat(cols[7]) || 0,
+                        pcYTe: parseFloat(cols[8]) || 0,
+                        dacBietPercent: parseFloat(cols[9]) || 30
                     });
                 }
-
-                if (newEmployees.length > 0) {
-                    employees = [...newEmployees, ...employees];
-                    showToast(`Nhập dữ liệu thành công ${newEmployees.length} dòng!`);
+                if (newData.length) {
+                    employees = [...newData, ...employees];
+                    saveToLocalStorage();
+                    showToast(`Nhập ${newData.length} dòng thành công!`);
                     closeModal('import-modal');
                     renderAll();
                 } else {
-                    showToast('Không có dữ liệu hợp lệ được tìm thấy!', 'error');
+                    showToast('Không có dữ liệu hợp lệ!', 'error');
                 }
-            } catch (err) {
-                showToast('Có lỗi xảy ra khi phân tích: ' + err.message, 'error');
-            }
+            } catch (err) { showToast('Lỗi phân tích: ' + err.message, 'error'); }
         }
-
-        // CSV Export function
         function exportCSV() {
-            const activeData = getFilteredData();
-            if (activeData.length === 0) {
-                showToast('Không có dữ liệu để xuất!', 'error');
-                return;
+            const data = getFilteredData();
+            if (!data.length) { showToast('Không có dữ liệu để xuất!', 'error'); return; }
+            const headers = ['Tháng','Họ tên','Mã ngạch','HSL','PC Chức vụ','PC Khu vực','PC ưu đãi (60%)','PC Trách nhiệm','Thâm niên %','PC Y tế','PC Đặc biệt (30%)','Cộng hệ số','Tiền lương','BHXH','BHYT','BHTN','Tổng trừ','Thực lãnh'];
+            const rows = data.map(e => [e.month, `"${e.name}"`, e.ngach, e.heSoLuong, e.pcChucVu, e.pcKhuVuc, e.pcUuDai, e.pcTrachNhiem, e.pctnPercent, e.pcYTe, e.pcDacBiet, e.tongHeSo, e.tienLuongThang, e.bhxh, e.bhyt, e.bhtn, e.tongKhauTru, e.thucLanh]);
+            const csv = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const link = document.createElement('a'); link.href = encodeURI(csv); link.download = `Bang_Luong_T7_2026.csv`; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            showToast('Xuất CSV thành công!');
+        }
+
+        // ================================================================
+        //  KHỞI TẠO
+        // ================================================================
+        window.addEventListener('DOMContentLoaded', () => {
+            // 1. Thử đọc dữ liệu từ localStorage
+            const hasLocalData = loadFromLocalStorage();
+
+            // 2. Nếu không có, dùng dữ liệu mặc định và lưu vào localStorage
+            if (!hasLocalData) {
+                employees = JSON.parse(JSON.stringify(DEFAULT_EMPLOYEES));
+                saveToLocalStorage();
             }
 
-            const headers = [
-                'Thang', 'Ho va ten', 'Ma ngach', 'He so luong', 'PC Chuc vu', 'PC Khu vuc', 
-                'PC Uu dai (%)', 'PC Trach nhiem', 'Tham nien (%)', 'PC Y te', 'PC Dac biet (%)', 
-                'Cong he so', 'Tien luong thang (VND)', 'BHXH (VND)', 'BHYT (VND)', 'BHTN (VND)', 
-                'Tong khau tru (VND)', 'Thuc lanh (VND)'
-            ];
+            // 3. Gán baseSalary
+            const bInput = document.getElementById('base-salary-input');
+            bInput.value = baseSalary;
+            bInput.addEventListener('change', (e) => {
+                const val = parseInt(e.target.value) || 0;
+                if (val > 0) {
+                    baseSalary = val;
+                    showToast('Cập nhật lương cơ sở!');
+                    renderAll();
+                }
+            });
+            document.getElementById('reset-base-salary').addEventListener('click', () => {
+                baseSalary = 2530000;
+                bInput.value = baseSalary;
+                showToast('Đặt lại 2.530.000₫');
+                renderAll();
+            });
 
-            const rows = activeData.map(emp => [
-                emp.month,
-                `"${emp.name}"`,
-                emp.ngach,
-                emp.heSoLuong,
-                emp.pcChucVu,
-                emp.pcKhuVuc,
-                emp.uuDaiPercent,
-                emp.pcTrachNhiem,
-                emp.pctnPercent,
-                emp.pcYTe,
-                emp.dacBietPercent,
-                emp.tongHeSo.toFixed(4),
-                emp.tienLuongThang,
-                emp.bhxh,
-                emp.bhyt,
-                emp.bhtn,
-                emp.tongKhauTru,
-                emp.thucLanh
-            ]);
-
-            const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
-                + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", `Bang_Luong_HCSN_${filterMonth}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            showToast('Đã xuất báo cáo thành công!');
-        }
+            // 4. Render lần đầu
+            renderAll();
+        });
     </script>
 </body>
 </html>
